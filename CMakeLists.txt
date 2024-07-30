@@ -7,7 +7,7 @@ project(laod_and_execute_model)
 set(CMAKE_C_STANDARD 99)
 
 # Archivos fuente
-set(SOURCES laod_and_execute_model.c)
+set(SOURCES C-code/laod_and_execute_model.c)
 
 # Crear el ejecutable
 add_executable(laod_and_execute_model ${SOURCES})
