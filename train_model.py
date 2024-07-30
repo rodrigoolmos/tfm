@@ -14,19 +14,21 @@ import struct
 ##                                                   ##
 #######################################################
 
-# Function to process a tree and export in the specified format
+# Function to process a tree and export in the specified format "Breadth-First Search, BFS"
 def process_tree(tree, n_nodes_and_leaves):
     node_leaf_value = []
     feature_index = []
-    next_node_left_index = []
     next_node_right_index = []
     leaf_or_node = []
 
-    node_queue = deque([(tree, 0)])
+    node_stack = [(tree, 0)]
     node_index = 0
+    index_mapping = {}
 
-    while node_queue:
-        node, current_index = node_queue.popleft()
+    while node_stack:
+        node, current_index = node_stack.pop()
+        index_mapping[current_index] = node_index
+
         if 'split_index' in node:
             # Internal node
             node_leaf_value.append(node['threshold'])
@@ -36,33 +38,35 @@ def process_tree(tree, n_nodes_and_leaves):
             left_child = node['left_child']
             right_child = node['right_child']
 
-            left_index = node_index + 1
-            right_index = node_index + 2
+            left_index = current_index * 2 + 1
+            right_index = current_index * 2 + 2
 
-            node_queue.append((left_child, left_index))
-            node_queue.append((right_child, right_index))
+            node_stack.append((right_child, right_index))
+            node_stack.append((left_child, left_index))
 
-            next_node_left_index.append(left_index)
             next_node_right_index.append(right_index)
-            
-            node_index += 2
+
+            node_index += 1
         else:
             # Leaf
             node_leaf_value.append(node['leaf_value'])
             feature_index.append(0)  # Not relevant for leaves
             leaf_or_node.append(0)  # Leaf
-            next_node_left_index.append(0)  # Not relevant for leaves
             next_node_right_index.append(0)  # Not relevant for leaves
+
+            node_index += 1
+
+    # Remap the indices to ensure they are correct
+    next_node_right_index = [index_mapping.get(idx, 0) for idx in next_node_right_index]
 
     # Pad with zeros up to n_nodes_and_leaves
     while len(node_leaf_value) < n_nodes_and_leaves:
         node_leaf_value.append(0.0)
         feature_index.append(0)
-        next_node_left_index.append(0)
         next_node_right_index.append(0)
         leaf_or_node.append(0)
 
-    return node_leaf_value, feature_index, next_node_left_index, next_node_right_index, leaf_or_node
+    return node_leaf_value, feature_index, next_node_right_index, leaf_or_node
 
 # Process the model to create the C structure
 def parse_model(booster, n_nodes_and_leaves):
@@ -105,11 +109,10 @@ def train_model_parse_and_store(data, output_model_name, num_trees=100, learning
     # Save the structures in a binary file
     with open(output_model_name, 'wb') as f:
         f.write(b'model')
-        for node_leaf_value, feature_index, next_node_left_index, next_node_right_index, leaf_or_node in trees:
+        for node_leaf_value, feature_index, next_node_right_index, leaf_or_node in trees:
             for value in node_leaf_value:
                 f.write(struct.pack('f', value))
             f.write(bytes(feature_index))
-            f.write(bytes(next_node_left_index))
             f.write(bytes(next_node_right_index))
             f.write(bytes(leaf_or_node))
 

@@ -16,7 +16,6 @@
 struct tree {
     float node_leaf_value[N_NODE_AND_LEAFS]; // value of the leaf result or the node to compare
     uint8_t feature_index[N_NODE_AND_LEAFS]; // feature index value for comparison
-    uint8_t next_node_left_index[N_NODE_AND_LEAFS]; // model index of the next node or leaf if the comparison is <=
     uint8_t next_node_right_index[N_NODE_AND_LEAFS]; // model index of the next node or leaf if the comparison is >
     uint8_t leaf_or_node[N_NODE_AND_LEAFS]; // information about whether it is a node or a leaf
 };
@@ -46,7 +45,7 @@ void load_model(struct tree trees[], const char *filename) {
         for (int t = 0; t < N_TREES; t++) {
             fread(trees[t].node_leaf_value, sizeof(float), N_NODE_AND_LEAFS, file);
             fread(trees[t].feature_index, sizeof(uint8_t), N_NODE_AND_LEAFS, file);
-            fread(trees[t].next_node_left_index, sizeof(uint8_t), N_NODE_AND_LEAFS, file);
+           // fread(trees[t].next_node_left_index, sizeof(uint8_t), N_NODE_AND_LEAFS, file);
             fread(trees[t].next_node_right_index, sizeof(uint8_t), N_NODE_AND_LEAFS, file);
             fread(trees[t].leaf_or_node, sizeof(uint8_t), N_NODE_AND_LEAFS, file);
         }
@@ -69,7 +68,7 @@ int predict(struct tree trees[], float features[]) {
             int feature_index = trees[t].feature_index[node_index];
             float threshold = trees[t].node_leaf_value[node_index];
             if (features[feature_index] <= threshold) {
-                node_index = trees[t].next_node_left_index[node_index];
+                node_index += 1;
             } else {
                 node_index = trees[t].next_node_right_index[node_index];
             }
