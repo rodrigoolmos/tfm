@@ -4,12 +4,8 @@
 #include <string.h>
 #include "predict.h"
 
-#define N_NODE_AND_LEAFS 256  // Adjust according to the maximum number of nodes and leaves in your trees
-#define N_TREES 100           // Adjust according to the number of trees in your model
-#define FEATURE_LENGTH 100    // Adjust according to the number of features in your model
 
 #define MAX_LINE_LENGTH 1024
-#define FEATURE_LENGTH 100
 #define MAX_COLUMNS 10
 
 #define MAX_TEST_SAMPLES 3000
@@ -17,7 +13,7 @@
 
 
 struct feature {
-    float features[FEATURE_LENGTH];
+    float features[N_FEATURE];
     uint8_t prediction;
 };
 
@@ -53,26 +49,6 @@ void load_model(struct tree trees[], const char *filename) {
 
     fclose(file);
 }
-/******************  VITIS  ******************* */
-int predict(struct tree trees[], float features[]) {
-    float sum = 0.0;
-
-    for (int t = 0; t < N_TREES; t++) {
-        int node_index = 0;
-
-        while (trees[t].leaf_or_node[node_index] == 1) {
-            int feature_index = trees[t].feature_index[node_index];
-            float threshold = trees[t].node_leaf_value[node_index];
-            if (features[feature_index] <= threshold) {
-                node_index += 1;
-            } else {
-                node_index = trees[t].next_node_right_index[node_index];
-            }
-        }
-        sum += trees[t].node_leaf_value[node_index];
-    }
-    return (int)(sum > 0 ? 1 : 0);
-}
 
 int read_n_features(const char *csv_file, int n, struct feature *features) {
     FILE *file = fopen(csv_file, "r");
@@ -86,11 +62,11 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
     }
 
     while (fgets(line, MAX_LINE_LENGTH, file) && features_read < n) {
-        float temp[FEATURE_LENGTH + 1];
+        float temp[N_FEATURE + 1];
         char *token = strtok(line, ",");
         int index = 0;
 
-        while (token != NULL && index < FEATURE_LENGTH + 1) {
+        while (token != NULL && index < N_FEATURE + 1) {
             temp[index] = strtof(token, NULL);
             token = strtok(NULL, ",");
             index++;
@@ -110,10 +86,10 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
 
 void evaluate_model(struct tree *trees, struct feature *features, int read_samples){
     int accuracy = 0;
-    int prediction;
+    uint8_t prediction;
 
     for (size_t i = 0; i < read_samples; i++){
-        prediction = predict(trees, features[i].features);
+        predict(trees, features[i].features, &prediction);
         if (features[i].prediction == prediction)
             accuracy++;
     }
