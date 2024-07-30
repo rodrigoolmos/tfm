@@ -2,6 +2,7 @@
 
 void predict(struct tree trees[N_TREES], float features[N_FEATURE], uint8_t *prediction) {
     int32_t sum = 0;
+    int32_t leaf_value;
 
     trees_loop:for (int t = 0; t < N_TREES; t++) {
         int node_index = 0;
@@ -15,7 +16,8 @@ void predict(struct tree trees[N_TREES], float features[N_FEATURE], uint8_t *pre
 
             node_index = (features[feature_index] <= threshold) ? node_index + 1 : trees[t].next_node_right_index[node_index];
         }
-        sum += trees[t].node_leaf_value[node_index];
+        leaf_value = *(int*)&trees[t].node_leaf_value[node_index];
+        sum += leaf_value;
     }
     *prediction = (uint8_t)(sum > 0 ? 1 : 0);
 }

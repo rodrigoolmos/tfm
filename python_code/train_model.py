@@ -49,9 +49,7 @@ def process_tree(tree, n_nodes_and_leaves):
             node_index += 1
         else:
             # Leaf
-            # Convert leaf value to an integer by rounding to use less resources in FPGA
-            leaf_value = int(round(node['leaf_value'] * 1000000))
-            node_leaf_value.append(leaf_value)
+            node_leaf_value.append(int(round(node['leaf_value'] * 1000000)))
             feature_index.append(0)  # Not relevant for leaves
             leaf_or_node.append(0)  # Leaf
             next_node_right_index.append(0)  # Not relevant for leaves
@@ -113,7 +111,10 @@ def train_model_parse_and_store(data, output_model_name, num_trees=100, learning
         f.write(b'model')
         for node_leaf_value, feature_index, next_node_right_index, leaf_or_node in trees:
             for value in node_leaf_value:
-                f.write(struct.pack('f', value))
+                if leaf_or_node[node_leaf_value.index(value)] == 0:
+                    f.write(struct.pack('i', int(value)))  # Save leaf values as int
+                else:
+                    f.write(struct.pack('f', value))  # Save node values as float
             f.write(bytes(feature_index))
             f.write(bytes(next_node_right_index))
             f.write(bytes(leaf_or_node))
@@ -177,5 +178,3 @@ sorted_data = sorted_data.iloc[:, :-1]
 output_path = "./datasets/alzheimers_processed_dataset.csv"
 sorted_data.to_csv(output_path, index=False, header=False)
 train_model_parse_and_store(sorted_data, "./trained_models/alzheimers.model", num_trees=100, learning_rate=0.5, n_jobs=72, test_size=0.6)
-
-
