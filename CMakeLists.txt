@@ -26,3 +26,5 @@ add_executable(laod_and_execute_model ${SOURCES})
 # Enlazar la biblioteca al ejecutable
 target_link_libraries(laod_and_execute_model PRIVATE predict_lib)
 
+# Crear un directorios
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/trained_models)
