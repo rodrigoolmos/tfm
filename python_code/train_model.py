@@ -49,7 +49,9 @@ def process_tree(tree, n_nodes_and_leaves):
             node_index += 1
         else:
             # Leaf
-            node_leaf_value.append(node['leaf_value'])
+            # Convert leaf value to an integer by rounding to use less resources in FPGA
+            leaf_value = int(round(node['leaf_value'] * 1000000))
+            node_leaf_value.append(leaf_value)
             feature_index.append(0)  # Not relevant for leaves
             leaf_or_node.append(0)  # Leaf
             next_node_right_index.append(0)  # Not relevant for leaves

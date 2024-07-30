@@ -1,7 +1,7 @@
 #include "predict.h"
 
 void predict(struct tree trees[], float features[], uint8_t *prediction) {
-    float sum = 0.0;
+    int32_t sum = 0;
 
     for (int t = 0; t < N_TREES; t++) {
         int node_index = 0;
