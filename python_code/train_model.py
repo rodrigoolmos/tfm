@@ -84,12 +84,15 @@ def train_model_parse_and_store(data, output_model_name, num_trees=100, learning
     # Separate features and label
     X = data.drop('Outcome', axis=1)
     y = data['Outcome']
-
+    n_nodes_and_leaves = 256
+    max_deep = 6
+    compact_data = [0] * n_nodes_and_leaves
+    
     # Split the dataset into training and test sets 0.2 test 0.8 training
     train_size = 1 - test_size
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, train_size=train_size, random_state=42)
 
-    lightgbm_model = lgb.LGBMClassifier(objective='binary', learning_rate=learning_rate, n_estimators=num_trees, n_jobs=n_jobs)
+    lightgbm_model = lgb.LGBMClassifier(objective='binary', learning_rate=learning_rate, n_estimators=num_trees, n_jobs=n_jobs, max_depth=max_deep)
     lightgbm_model.fit(X_train, y_train)
     y_pred_lgb = lightgbm_model.predict(X_test)
     lgb_accuracy = accuracy_score(y_test, y_pred_lgb)
@@ -99,25 +102,26 @@ def train_model_parse_and_store(data, output_model_name, num_trees=100, learning
     print(f"LightGBM - Number of Trees: {lightgbm_model.n_estimators}")
     print(f"LightGBM - Accuracy: {lgb_accuracy:.4f}, AUC: {lgb_auc:.4f}")
 
-    # Convert the booster to JSON format
     booster_json = lightgbm_model.booster_.dump_model()
     tree = booster_json['tree_info'][0]['tree_structure']
 
-    n_nodes_and_leaves = 256  # Adjust according to your needs
+    
     trees = parse_model(lightgbm_model.booster_, n_nodes_and_leaves)
 
     # Save the structures in a binary file
     with open(output_model_name, 'wb') as f:
         f.write(b'model')
         for node_leaf_value, feature_index, next_node_right_index, leaf_or_node in trees:
+            for index in range(len(feature_index)):
+                compact_data[index] = (feature_index[index] & 0x7F) + ((leaf_or_node[index] & 0x01) << 7)
             for value in node_leaf_value:
                 if leaf_or_node[node_leaf_value.index(value)] == 0:
-                    f.write(struct.pack('i', int(value)))  # Save leaf values as int
+                    f.write(struct.pack('i', int(value)))  # Save leaf values as int for FPGA reources
                 else:
                     f.write(struct.pack('f', value))  # Save node values as float
-            f.write(bytes(feature_index))
+            
+            f.write(bytes(compact_data))
             f.write(bytes(next_node_right_index))
-            f.write(bytes(leaf_or_node))
 
 def preprocess_data(data):
     data.replace({'M': 0, 'F': 1, 'M ': 0, 'F ': 1, ' M ': 0, ' F ': 1, ' M': 0, ' F': 1,
