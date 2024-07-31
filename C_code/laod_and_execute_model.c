@@ -23,18 +23,10 @@ struct dataset {
     int num_cols;
 };
 
-<<<<<<< Updated upstream
-void load_model(uint8_t tree_leaf_node[N_TREES][N_NODE_AND_LEAFS],
-                uint8_t tree_right_indexs[N_TREES][N_NODE_AND_LEAFS],
-                uint8_t tree_feture_indexs[N_TREES][N_NODE_AND_LEAFS],
-                float tree_node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
-                const char *filename) {
-=======
 void load_model(float node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
             uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS],
             uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS],
             const char *filename) {
->>>>>>> Stashed changes
 
     char magic_number[5] = {0};
     FILE *file = fopen(filename, "rb");
@@ -47,18 +39,11 @@ void load_model(float node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
 
     if (!memcmp(magic_number, "model", 5)){
         for (int t = 0; t < N_TREES; t++) {
-<<<<<<< Updated upstream
-            fread(tree_node_leaf_value[t], sizeof(float), N_NODE_AND_LEAFS, file);
-            fread(tree_feture_indexs[t], sizeof(uint8_t), N_NODE_AND_LEAFS, file);
-            fread(tree_right_indexs[t], sizeof(uint8_t), N_NODE_AND_LEAFS, file);
-            fread(tree_leaf_node[t], sizeof(uint8_t), N_NODE_AND_LEAFS, file);
-=======
             fread(node_leaf_value[t], sizeof(float), N_NODE_AND_LEAFS, file);
             fread(compact_data[t], sizeof(uint8_t), N_NODE_AND_LEAFS, file);
             //fread(next_node_left_index, sizeof(uint8_t), N_NODE_AND_LEAFS, file);
             fread(next_node_right_index[t], sizeof(uint8_t), N_NODE_AND_LEAFS, file);
             //fread(leaf_or_node, sizeof(uint8_t), N_NODE_AND_LEAFS, file);
->>>>>>> Stashed changes
         }
     }else{
         perror("Unknown file type");
@@ -103,29 +88,16 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
     return features_read;
 }
 
-<<<<<<< Updated upstream
-void evaluate_model(uint8_t tree_leaf_node[N_TREES][N_NODE_AND_LEAFS],
-                    uint8_t tree_right_indexs[N_TREES][N_NODE_AND_LEAFS],
-                    uint8_t tree_feture_indexs[N_TREES][N_NODE_AND_LEAFS],
-                    float tree_node_leaf_value[N_TREES][N_NODE_AND_LEAFS], 
-=======
 void evaluate_model(float node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
                     uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS],
                     uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS], 
->>>>>>> Stashed changes
                     struct feature *features, int read_samples){
 
     int accuracy = 0;
     uint8_t prediction;
 
     for (size_t i = 0; i < read_samples; i++){
-<<<<<<< Updated upstream
-        predict(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                tree_node_leaf_value, features[i].features, &prediction);
-
-=======
         predict(node_leaf_value, compact_data, next_node_right_index, features[i].features, &prediction);
->>>>>>> Stashed changes
         if (features[i].prediction == prediction)
             accuracy++;
     }
@@ -134,13 +106,6 @@ void evaluate_model(float node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
 }
 
 int main() {
-<<<<<<< Updated upstream
-    uint8_t tree_leaf_node[N_TREES][N_NODE_AND_LEAFS];
-    uint8_t tree_right_indexs[N_TREES][N_NODE_AND_LEAFS];
-    uint8_t tree_feture_indexs[N_TREES][N_NODE_AND_LEAFS];
-    float tree_node_leaf_value[N_TREES][N_NODE_AND_LEAFS];
-=======
->>>>>>> Stashed changes
     float prediction;
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
@@ -150,36 +115,6 @@ int main() {
 
 
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
-<<<<<<< Updated upstream
-    load_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                tree_node_leaf_value, "../trained_models/diabetes.model");
-    evaluate_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                    tree_node_leaf_value, features, read_samples);
-    
-    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
-    load_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                tree_node_leaf_value, "../trained_models/heart_attack.model");
-    evaluate_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                    tree_node_leaf_value, features, read_samples);
-
-    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                tree_node_leaf_value, "../trained_models/lung_cancer.model");
-    evaluate_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                    tree_node_leaf_value, features, read_samples);
-
-    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                tree_node_leaf_value, "../trained_models/anemia.model");
-    evaluate_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                    tree_node_leaf_value, features, read_samples);
-
-    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                tree_node_leaf_value, "../trained_models/alzheimers.model");
-    evaluate_model(tree_leaf_node, tree_right_indexs, tree_feture_indexs, 
-                    tree_node_leaf_value, features, read_samples);
-=======
     load_model(node_leaf_value, compact_data, next_node_right_index, "../trained_models/diabetes.model");
     evaluate_model(node_leaf_value, compact_data, next_node_right_index, features, read_samples);
     
@@ -198,7 +133,6 @@ int main() {
     read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
     load_model(node_leaf_value, compact_data, next_node_right_index, "../trained_models/alzheimers.model");
     evaluate_model(node_leaf_value, compact_data, next_node_right_index, features, read_samples);
->>>>>>> Stashed changes
 
     return 0;
 }
