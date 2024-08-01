@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "predict.h"
 
 
@@ -95,6 +96,9 @@ void evaluate_model(float node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
 
     int accuracy = 0;
     uint8_t prediction;
+    clock_t start_time, end_time;
+    double cpu_time_used;
+    start_time = clock();
 
     for (size_t i = 0; i < read_samples; i++){
         predict(node_leaf_value, compact_data, next_node_right_index, features[i].features, &prediction);
@@ -103,6 +107,9 @@ void evaluate_model(float node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
     }
 
     printf("Accuracy %f\n", 1.0 * accuracy / read_samples);
+    end_time = clock();
+    cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+    printf("Tiempo de ejecucion por feature: %f segundos\n", cpu_time_used / read_samples);
 }
 
 int main() {

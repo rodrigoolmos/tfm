@@ -80,12 +80,12 @@ def parse_model(booster, n_nodes_and_leaves):
     
     return trees
 
-def train_model_parse_and_store(data, output_model_name, num_trees=100, learning_rate=0.1, n_jobs=72, test_size=0.8):
+def train_model_parse_and_store(data, output_model_name, num_trees=200, learning_rate=0.1, n_jobs=72, test_size=0.8):
     # Separate features and label
     X = data.drop('Outcome', axis=1)
     y = data['Outcome']
-    n_nodes_and_leaves = 256
-    max_deep = 6
+    n_nodes_and_leaves = 64
+    max_deep = 5
     compact_data = [0] * n_nodes_and_leaves
     
     # Split the dataset into training and test sets 0.2 test 0.8 training
@@ -132,13 +132,13 @@ def preprocess_data(data):
 path = "./datasets/diabetes.csv"
 column_names = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
 data = pd.read_csv(path, names=column_names)
-train_model_parse_and_store(data, "./trained_models/diabetes.model", num_trees=100, learning_rate=0.5, n_jobs=72, test_size=0.3)
+train_model_parse_and_store(data, "./trained_models/diabetes.model", num_trees=200, learning_rate=0.5, n_jobs=72, test_size=0.3)
 
 # Load the Heart Attack dataset
 path = "./datasets/Heart_Attack.csv"
 column_names = ['age', 'sex', 'cp', 'trtbps', 'chol', 'fbs', 'restecg', 'thalachh', 'exng', 'oldpeak', 'slp', 'caa', 'thall', 'Outcome']
 data = pd.read_csv(path, names=column_names)
-train_model_parse_and_store(data, "./trained_models/heart_attack.model", num_trees=100, learning_rate=0.5, n_jobs=72, test_size=0.2)
+train_model_parse_and_store(data, "./trained_models/heart_attack.model", num_trees=200, learning_rate=0.5, n_jobs=72, test_size=0.2)
 
 # Load the Lung Cancer raw dataset
 path = "./datasets/Lung_Cancer_raw.csv"
@@ -150,7 +150,7 @@ processed_data = preprocess_data(data)
 # Save the transformed DataFrame in a new CSV file
 output_path = "./datasets/Lung_Cancer_processed_dataset.csv"
 processed_data.to_csv(output_path, index=False, header=False)
-train_model_parse_and_store(processed_data, "./trained_models/lung_cancer.model", num_trees=100, learning_rate=0.5, n_jobs=72, test_size=0.3)
+train_model_parse_and_store(processed_data, "./trained_models/lung_cancer.model", num_trees=200, learning_rate=0.5, n_jobs=72, test_size=0.1)
 
 # Load the anemia dataset
 path = "./datasets/anemia.csv"
@@ -163,7 +163,7 @@ processed_data = preprocess_data(sorted_data)
 # Save the transformed DataFrame in a new CSV file
 output_path = "./datasets/anemia_processed_dataset.csv"
 processed_data.to_csv(output_path, index=False, header=False)
-train_model_parse_and_store(processed_data, "./trained_models/anemia.model", num_trees=100, learning_rate=0.5, n_jobs=72, test_size=0.6)
+train_model_parse_and_store(processed_data, "./trained_models/anemia.model", num_trees=200, learning_rate=0.5, n_jobs=72, test_size=0.6)
 
 # Load the alzheimers dataset
 path = "./datasets/alzheimers_disease_data.csv"
@@ -181,4 +181,4 @@ sorted_data = sorted_data.iloc[:, :-1]
 # Save the transformed DataFrame in a new CSV file
 output_path = "./datasets/alzheimers_processed_dataset.csv"
 sorted_data.to_csv(output_path, index=False, header=False)
-train_model_parse_and_store(sorted_data, "./trained_models/alzheimers.model", num_trees=100, learning_rate=0.5, n_jobs=72, test_size=0.6)
+train_model_parse_and_store(sorted_data, "./trained_models/alzheimers.model", num_trees=200, learning_rate=0.5, n_jobs=72, test_size=0.6)
