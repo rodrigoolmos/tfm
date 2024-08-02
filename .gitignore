@@ -4,3 +4,4 @@ trained_models/
 TFM_documentos/
 vitis/
 export/
+*.xml

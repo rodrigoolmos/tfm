@@ -5,20 +5,7 @@ uint8_t cmpf(float a, float b) {
     uint32_t int_a = *(uint32_t*)&a;
     uint32_t int_b = *(uint32_t*)&b;
 
-    // Extract the sign bits, exponents, and mantissas
-    uint8_t sign_a = int_a >> 31;
-    uint8_t sign_b = int_b >> 31;
-    uint32_t abs_a = int_a & 0x7FFFFFFF;
-    uint32_t abs_b = int_b & 0x7FFFFFFF;
-
-    // Compare the sign bits
-    if (sign_a > sign_b) {
-        return 1;
-    }
-
-    // Compare the absolute values considering the sign
-    uint8_t temp = (abs_a > abs_b);
-    return (!sign_a) ? !temp : temp;
+    return (int_a > int_b) ? 0 : 1;
 }
 
 void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
@@ -26,14 +13,17 @@ void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
             uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS],
             float features[N_FEATURE], uint8_t *prediction){
 
-	#pragma HLS INTERFACE mode=s_axilite port=features
-	#pragma HLS INTERFACE mode=s_axilite port=next_node_right_index
-	#pragma HLS INTERFACE mode=s_axilite port=compact_data
-	#pragma HLS INTERFACE mode=s_axilite port=node_leaf_value
+	#pragma HLS INTERFACE mode=s_axilite port=prediction bundle=prediction
+	#pragma HLS INTERFACE mode=s_axilite port=features bundle=features
+	#pragma HLS INTERFACE mode=s_axilite port=next_node_right_index bundle=next_node_right_index
+	#pragma HLS INTERFACE mode=s_axilite port=compact_data bundle=compact_data
+	#pragma HLS INTERFACE mode=s_axilite port=node_leaf_value bundle=node_leaf_value
+	#pragma HLS INTERFACE s_axilite port=return bundle=results
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=next_node_right_index
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=compact_data
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=node_leaf_value
 	#pragma HLS ARRAY_PARTITION dim=1 factor=N_FEATURE/2 type=cyclic variable=features
+
 
 	int32_t sum = 0;
     int32_t leaf_value;
