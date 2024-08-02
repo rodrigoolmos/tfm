@@ -19,11 +19,12 @@ void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
 	#pragma HLS INTERFACE mode=s_axilite port=compact_data bundle=compact_data
 	#pragma HLS INTERFACE mode=s_axilite port=node_leaf_value bundle=node_leaf_value
 	#pragma HLS INTERFACE s_axilite port=return bundle=results
+/*
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=next_node_right_index
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=compact_data
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=node_leaf_value
 	#pragma HLS ARRAY_PARTITION dim=1 factor=N_FEATURE/2 type=cyclic variable=features
-
+*/
 
 	int32_t sum = 0;
     int32_t leaf_value;
@@ -35,7 +36,7 @@ void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
 
 
     trees_loop:for (int t = 0; t < N_TREES; t++) {
-	#pragma HLS UNROLL
+	//#pragma HLS UNROLL
 
         uint8_t node_index = 0;
         uint8_t node_right;
