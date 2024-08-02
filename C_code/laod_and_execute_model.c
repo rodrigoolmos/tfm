@@ -24,7 +24,7 @@ struct dataset {
     int num_cols;
 };
 
-void load_model(float node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
+void load_model(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
             uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS],
             uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS],
             const char *filename) {
@@ -89,7 +89,7 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
     return features_read;
 }
 
-void evaluate_model(float node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
+void evaluate_model(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
                     uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS],
                     uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS], 
                     struct feature *features, int read_samples){
@@ -116,7 +116,7 @@ int main() {
     float prediction;
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
-    float node_leaf_value[N_TREES][N_NODE_AND_LEAFS];
+    float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS];
     uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS];
     uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS]; 
 
