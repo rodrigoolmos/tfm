@@ -72,7 +72,7 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
         int index = 0;
 
         while (token != NULL && index < N_FEATURE + 1) {
-            temp[index] = strtof(token, NULL);
+            temp[index] = atof(token);
             token = strtok(NULL, ",");
             index++;
         }
