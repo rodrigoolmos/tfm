@@ -2,6 +2,5 @@ build/
 trained_models/
 .vscode/
 TFM_documentos/
-vitis/
 export/
 *.xml
