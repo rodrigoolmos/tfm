@@ -7,7 +7,7 @@ project(laod_and_execute_model)
 set(CMAKE_C_STANDARD 99)
 
 # Establecer la ruta al directorio de los archivos fuente
-set(SRC_DIR ${CMAKE_SOURCE_DIR}/C_code)
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/C_code_vitis)
 
 # Incluir los archivos fuente de la biblioteca
 set(LIB_SOURCES

@@ -3,4 +3,5 @@ trained_models/
 .vscode/
 TFM_documentos/
 export/
+pcie_axi_lite_IP/
 *.xml
