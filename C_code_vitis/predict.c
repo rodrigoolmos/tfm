@@ -1,13 +1,5 @@
 #include "predict.h"
 
-uint8_t cmpf(float a, float b) {
-    // Convert the floats to unsigned 32-bit integers
-    uint32_t int_a = *(uint32_t*)&a;
-    uint32_t int_b = *(uint32_t*)&b;
-
-    return (int_a > int_b) ? 0 : 1;
-}
-
 void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
             uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS],
             uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS],
@@ -38,7 +30,6 @@ void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
         uint8_t node_left;
         uint8_t feature_index;
         float threshold;
-        uint8_t done = 0;
 
         while (1) {
             #pragma HLS loop_tripcount min=1 max=100
@@ -47,11 +38,11 @@ void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
             node_left = node_index + 1;
             node_right = next_node_right_index[t][node_index];
 
-            node_index = cmpf(features[feature_index], threshold) ? node_left : node_right;
+            node_index = *(int32_t*)&features[feature_index] < *(int32_t*)&threshold ? 
+                                node_left : node_right;
 
-            done = (compact_data[t][node_index] & 0x80) == 0 ? 1 : 0;
 
-           if (done)
+           if (!(compact_data[t][node_index] & 0x80))
                 break;
         }
 
