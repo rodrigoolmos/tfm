@@ -84,7 +84,6 @@ def train_model_parse_and_store(data, output_model_name, num_trees=200, learning
     # Separate features and label
     X = data.drop('Outcome', axis=1)
     y = data['Outcome']
-    max_depth = 8
     num_leaves = 2**max_depth
     n_nodes_and_leaves = num_leaves
     compact_data = [0] * n_nodes_and_leaves
