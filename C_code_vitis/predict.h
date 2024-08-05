@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 #define N_NODE_AND_LEAFS 256  // Adjust according to the maximum number of nodes and leaves in your trees
-#define N_TREES 120           // Adjust according to the number of trees in your model
+#define N_TREES 10           // Adjust according to the number of trees in your model
 #define N_FEATURE 32    // Adjust according to the number of features in your model
 
 typedef union {
@@ -22,5 +22,5 @@ typedef union {
     uint64_t compact_data;
 } tree_data;
 
-void predict(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
+void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
             float features[N_FEATURE], uint8_t *prediction);
