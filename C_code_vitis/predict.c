@@ -10,7 +10,7 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
 	#pragma HLS INTERFACE mode=s_axilite port=tree bundle=tree
 	#pragma HLS INTERFACE s_axilite port=return bundle=control
 
-	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=tree
+	#pragma HLS ARRAY_PARTITION dim=1 factor=N_TREES/2 type=block variable=tree
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=features
 
 	int32_t sum = 0;
