@@ -1,8 +1,6 @@
 #include "predict.h"
 
-void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
-            uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS],
-            uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS],
+void predict(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
             float features[N_FEATURE], uint8_t *prediction){
 
 	#pragma HLS TOP name=predict
@@ -23,7 +21,7 @@ void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
     int32_t leaf_value;
 
     trees_loop:for (int t = 0; t < N_TREES; t++) {
-	#pragma HLS UNROLL
+	#pragma HLS UNROLL factor=N_TREES
 
         uint8_t node_index = 0;
         uint8_t node_right;
@@ -31,22 +29,22 @@ void predict(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
         uint8_t feature_index;
         float threshold;
 
-        while (1) {
-            #pragma HLS loop_tripcount min=1 max=100
-            feature_index = compact_data[t][node_index] & 0x7F;
-            threshold = node_leaf_value[t][node_index].f;
+        predict_label0:while (1) {
+            #pragma HLS loop_tripcount min=1 max=N_NODE_AND_LEAFS
+            feature_index = tree[t][node_index].tree_camps.feature_index;
+            threshold = tree[t][node_index].tree_camps.float_int_union.f;
             node_left = node_index + 1;
-            node_right = next_node_right_index[t][node_index];
+            node_right = tree[t][node_index].tree_camps.next_node_right_index;
 
             node_index = *(int32_t*)&features[feature_index] < *(int32_t*)&threshold ? 
                                 node_left : node_right;
 
 
-           if (!(compact_data[t][node_index] & 0x80))
+           if (!tree[t][node_index].tree_camps.leaf_or_node)
                 break;
         }
 
-        leaf_value = node_leaf_value[t][node_index].i;
+        leaf_value = tree[t][node_index].tree_camps.float_int_union.i;
         sum += leaf_value;
     }
     *prediction = (uint8_t)(sum > 0 ? 1 : 0);

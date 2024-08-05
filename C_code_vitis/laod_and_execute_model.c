@@ -5,13 +5,10 @@
 #include <time.h>
 #include "predict.h"
 
-
 #define MAX_LINE_LENGTH 1024
 #define MAX_COLUMNS 10
 
 #define MAX_TEST_SAMPLES 3000
-
-
 
 struct feature {
     float features[N_FEATURE];
@@ -24,9 +21,8 @@ struct dataset {
     int num_cols;
 };
 
-void load_model(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
-            uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS],
-            uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS],
+void load_model(
+            tree_data tree_data[N_TREES][N_NODE_AND_LEAFS],
             const char *filename) {
 
     char magic_number[5] = {0};
@@ -40,11 +36,9 @@ void load_model(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
 
     if (!memcmp(magic_number, "model", 5)){
         for (int t = 0; t < N_TREES; t++) {
-            fread(node_leaf_value[t], sizeof(float), N_NODE_AND_LEAFS, file);
-            fread(compact_data[t], sizeof(uint8_t), N_NODE_AND_LEAFS, file);
-            //fread(next_node_left_index, sizeof(uint8_t), N_NODE_AND_LEAFS, file);
-            fread(next_node_right_index[t], sizeof(uint8_t), N_NODE_AND_LEAFS, file);
-            //fread(leaf_or_node, sizeof(uint8_t), N_NODE_AND_LEAFS, file);
+            for (int n = 0; n < N_NODE_AND_LEAFS; n++) {
+                fread(&tree_data[t][n], sizeof(uint64_t), 1, file);
+            }
         }
     }else{
         perror("Unknown file type");
@@ -89,9 +83,7 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
     return features_read;
 }
 
-void evaluate_model(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
-                    uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS],
-                    uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS], 
+void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS], 
                     struct feature *features, int read_samples){
 
     int accuracy = 0;
@@ -101,7 +93,7 @@ void evaluate_model(float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS],
     start_time = clock();
 
     for (size_t i = 0; i < read_samples; i++){
-        predict(node_leaf_value, compact_data, next_node_right_index, features[i].features, &prediction);
+        predict(tree, features[i].features, &prediction);
         if (features[i].prediction == prediction)
             accuracy++;
     }
@@ -116,30 +108,28 @@ int main() {
     float prediction;
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
-    float_int_union node_leaf_value[N_TREES][N_NODE_AND_LEAFS];
-    uint8_t compact_data[N_TREES][N_NODE_AND_LEAFS];
-    uint8_t next_node_right_index[N_TREES][N_NODE_AND_LEAFS]; 
+    tree_data tree_data[N_TREES][N_NODE_AND_LEAFS];
 
 
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
-    load_model(node_leaf_value, compact_data, next_node_right_index, "../trained_models/diabetes.model");
-    evaluate_model(node_leaf_value, compact_data, next_node_right_index, features, read_samples);
+    load_model(tree_data, "../trained_models/diabetes.model");
+    evaluate_model(tree_data, features, read_samples);
     
     read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
-    load_model(node_leaf_value, compact_data, next_node_right_index, "../trained_models/heart_attack.model");
-    evaluate_model(node_leaf_value, compact_data, next_node_right_index, features, read_samples);
+    load_model(tree_data, "../trained_models/heart_attack.model");
+    evaluate_model(tree_data, features, read_samples);
 
     read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(node_leaf_value, compact_data, next_node_right_index, "../trained_models/lung_cancer.model");
-    evaluate_model(node_leaf_value, compact_data, next_node_right_index, features, read_samples);
+    load_model(tree_data, "../trained_models/lung_cancer.model");
+    evaluate_model(tree_data, features, read_samples);
 
     read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(node_leaf_value, compact_data, next_node_right_index, "../trained_models/anemia.model");
-    evaluate_model(node_leaf_value, compact_data, next_node_right_index, features, read_samples);
+    load_model(tree_data, "../trained_models/anemia.model");
+    evaluate_model(tree_data, features, read_samples);
 
     read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(node_leaf_value, compact_data, next_node_right_index, "../trained_models/alzheimers.model");
-    evaluate_model(node_leaf_value, compact_data, next_node_right_index, features, read_samples);
+    load_model(tree_data, "../trained_models/alzheimers.model");
+    evaluate_model(tree_data, features, read_samples);
 
     return 0;
 }

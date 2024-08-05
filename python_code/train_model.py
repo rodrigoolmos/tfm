@@ -80,13 +80,13 @@ def parse_model(booster, n_nodes_and_leaves):
     
     return trees
 
-def train_model_parse_and_store(data, output_model_name, num_trees=200, learning_rate=0.1, n_jobs=72, test_size=0.8, max_depth = 8):
+def train_model_parse_and_store(data, output_model_name, num_trees=200, learning_rate=0.1, n_jobs=72, test_size=0.8, max_depth = 10):
     # Separate features and label
     X = data.drop('Outcome', axis=1)
     y = data['Outcome']
-    num_leaves = 2**max_depth
-    n_nodes_and_leaves = num_leaves
-    compact_data = [0] * n_nodes_and_leaves
+    num_leaves = int(2**(max_depth - 1))
+    num_nodes_and_leaves = num_leaves * 2
+    compact_data = [0] * num_nodes_and_leaves
     
     # Split the dataset into training and test sets 0.2 test 0.8 training
     train_size = 1 - test_size
@@ -106,23 +106,28 @@ def train_model_parse_and_store(data, output_model_name, num_trees=200, learning
     booster_json = lightgbm_model.booster_.dump_model()
     tree = booster_json['tree_info'][0]['tree_structure']
 
-    
-    trees = parse_model(lightgbm_model.booster_, n_nodes_and_leaves)
+    print(lightgbm_model.get_params())
+    trees = parse_model(lightgbm_model.booster_, num_nodes_and_leaves)
 
     # Save the structures in a binary file
     with open(output_model_name, 'wb') as f:
         f.write(b'model')
         for node_leaf_value, feature_index, next_node_right_index, leaf_or_node in trees:
             for index in range(len(feature_index)):
-                compact_data[index] = (feature_index[index] & 0x7F) + ((leaf_or_node[index] & 0x01) << 7)
-            for value in node_leaf_value:
-                if leaf_or_node[node_leaf_value.index(value)] == 0:
-                    f.write(struct.pack('i', int(value)))  # Save leaf values as int for FPGA reources
+                if leaf_or_node[index] == 0:
+                    f.write(struct.pack('B', leaf_or_node[index]))
+                    f.write(struct.pack('B', feature_index[index]))
+                    f.write(struct.pack('B', next_node_right_index[index]))
+                    f.write(struct.pack('B', 0xff))
+                    f.write(struct.pack('i', int(node_leaf_value[index])))  # Save leaf values as int for FPGA reources
                 else:
-                    f.write(struct.pack('f', value))  # Save node values as float
-            
-            f.write(bytes(compact_data))
-            f.write(bytes(next_node_right_index))
+                    f.write(struct.pack('B', leaf_or_node[index]))
+                    f.write(struct.pack('B', feature_index[index]))
+                    f.write(struct.pack('B', next_node_right_index[index]))
+                    f.write(struct.pack('B', 0xff))
+                    f.write(struct.pack('f', node_leaf_value[index]))  # Save node values as float
+        
+
 
 def preprocess_data(data):
     data.replace({'M': 0, 'F': 1, 'M ': 0, 'F ': 1, ' M ': 0, ' F ': 1, ' M': 0, ' F': 1,
@@ -133,13 +138,13 @@ def preprocess_data(data):
 path = "./datasets/diabetes.csv"
 column_names = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
 data = pd.read_csv(path, names=column_names)
-train_model_parse_and_store(data, "./trained_models/diabetes.model", num_trees=128, learning_rate=0.5, n_jobs=72, test_size=0.2, max_depth = 8)
+train_model_parse_and_store(data, "./trained_models/diabetes.model", num_trees=120, learning_rate=0.5, n_jobs=72, test_size=0.2, max_depth = 8)
 
 # Load the Heart Attack dataset
 path = "./datasets/Heart_Attack.csv"
 column_names = ['age', 'sex', 'cp', 'trtbps', 'chol', 'fbs', 'restecg', 'thalachh', 'exng', 'oldpeak', 'slp', 'caa', 'thall', 'Outcome']
 data = pd.read_csv(path, names=column_names)
-train_model_parse_and_store(data, "./trained_models/heart_attack.model", num_trees=128, learning_rate=0.5, n_jobs=72, test_size=0.2, max_depth = 8)
+train_model_parse_and_store(data, "./trained_models/heart_attack.model", num_trees=120, learning_rate=0.5, n_jobs=72, test_size=0.2, max_depth = 8)
 
 # Load the Lung Cancer raw dataset
 path = "./datasets/Lung_Cancer_raw.csv"
@@ -151,7 +156,7 @@ processed_data = preprocess_data(data)
 # Save the transformed DataFrame in a new CSV file
 output_path = "./datasets/Lung_Cancer_processed_dataset.csv"
 processed_data.to_csv(output_path, index=False, header=False)
-train_model_parse_and_store(processed_data, "./trained_models/lung_cancer.model", num_trees=128, learning_rate=0.5, n_jobs=72, test_size=0.1, max_depth = 8)
+train_model_parse_and_store(processed_data, "./trained_models/lung_cancer.model", num_trees=120, learning_rate=0.5, n_jobs=72, test_size=0.1, max_depth = 8)
 
 # Load the anemia dataset
 path = "./datasets/anemia.csv"
@@ -164,7 +169,7 @@ processed_data = preprocess_data(sorted_data)
 # Save the transformed DataFrame in a new CSV file
 output_path = "./datasets/anemia_processed_dataset.csv"
 processed_data.to_csv(output_path, index=False, header=False)
-train_model_parse_and_store(processed_data, "./trained_models/anemia.model", num_trees=128, learning_rate=0.5, n_jobs=72, test_size=0.6, max_depth = 8)
+train_model_parse_and_store(processed_data, "./trained_models/anemia.model", num_trees=120, learning_rate=0.5, n_jobs=72, test_size=0.6, max_depth = 8)
 
 # Load the alzheimers dataset
 path = "./datasets/alzheimers_disease_data.csv"
@@ -182,4 +187,4 @@ sorted_data = sorted_data.iloc[:, :-1]
 # Save the transformed DataFrame in a new CSV file
 output_path = "./datasets/alzheimers_processed_dataset.csv"
 sorted_data.to_csv(output_path, index=False, header=False)
-train_model_parse_and_store(sorted_data, "./trained_models/alzheimers.model", num_trees=128, learning_rate=0.5, n_jobs=72, test_size=0.6, max_depth = 8)
+train_model_parse_and_store(sorted_data, "./trained_models/alzheimers.model", num_trees=120, learning_rate=0.5, n_jobs=72, test_size=0.6, max_depth = 8)
