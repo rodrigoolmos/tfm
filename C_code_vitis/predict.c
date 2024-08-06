@@ -38,7 +38,7 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
                                     node_left : node_right;
 
 
-            if (tree_data.tree_camps.leaf_or_node & 0x01)
+            if (!(tree_data.tree_camps.leaf_or_node & 0x01))
             	break;
         }
 
