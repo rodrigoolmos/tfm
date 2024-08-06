@@ -87,14 +87,14 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
                     struct feature *features, int read_samples){
 
     int accuracy = 0;
-    uint8_t prediction;
+    int32_t prediction;
     clock_t start_time, end_time;
     double cpu_time_used;
     start_time = clock();
 
     for (size_t i = 0; i < read_samples; i++){
         predict(tree, features[i].features, &prediction);
-        if (features[i].prediction == prediction)
+        if (features[i].prediction == (prediction > 0))
             accuracy++;
     }
 

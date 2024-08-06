@@ -23,4 +23,4 @@ typedef union {
 } tree_data;
 
 void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
-            float features[N_FEATURE], uint8_t *prediction);
+            float features[N_FEATURE], int32_t *prediction);

@@ -1,7 +1,7 @@
 #include "predict.h"
 
 void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
-            float features[N_FEATURE], uint8_t *prediction){
+            float features[N_FEATURE], int32_t *prediction){
 
 	#pragma HLS TOP name=predict
 
@@ -45,5 +45,5 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
         leaf_value = tree_data.tree_camps.float_int_union.i;
         sum += leaf_value;
     }
-    *prediction = (uint8_t)(sum > 0 ? 1 : 0);
+    *prediction = sum;
 }
