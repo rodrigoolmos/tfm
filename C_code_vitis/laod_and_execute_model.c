@@ -110,7 +110,7 @@ int main() {
     int read_samples;
     tree_data tree_data[N_TREES][N_NODE_AND_LEAFS];
 
-
+    printf("Executing SW\n");
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
     load_model(tree_data, "../trained_models/diabetes.model");
     evaluate_model(tree_data, features, read_samples);

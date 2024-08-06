@@ -240,25 +240,25 @@ int main() {
         close(fd);
         exit(1);
     }
-
-    read_samples = read_n_features("../../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
-    load_model(tree_data, "../../trained_models/diabetes.model");
+    printf("Executing HW\n");
+    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
+    load_model(tree_data, "../trained_models/diabetes.model");
     evaluate_model_hardware(map_base, tree_data, read_samples, features);
     
-    read_samples = read_n_features("../../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
-    load_model(tree_data, "../../trained_models/heart_attack.model");
+    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
+    load_model(tree_data, "../trained_models/heart_attack.model");
     evaluate_model_hardware(map_base, tree_data, read_samples, features);
 
-    read_samples = read_n_features("../../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(tree_data, "../../trained_models/lung_cancer.model");
+    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    load_model(tree_data, "../trained_models/lung_cancer.model");
     evaluate_model_hardware(map_base, tree_data, read_samples, features);
 
-    read_samples = read_n_features("../../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(tree_data, "../../trained_models/anemia.model");
+    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    load_model(tree_data, "../trained_models/anemia.model");
     evaluate_model_hardware(map_base, tree_data, read_samples, features);
 
-    read_samples = read_n_features("../../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(tree_data, "../../trained_models/alzheimers.model");
+    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    load_model(tree_data, "../trained_models/alzheimers.model");
     evaluate_model_hardware(map_base, tree_data, read_samples, features);
 
     return 0;
