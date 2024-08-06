@@ -15,10 +15,13 @@ set(LIB_SOURCES
 add_library(predict_lib STATIC ${LIB_SOURCES})
 
 set(SOURCES_SW ${DIR_SW}/laod_and_execute_model.c)
-set(SOURCES_HW ${DIR_HW}/main.c)
 
 add_executable(execute_model_sw ${SOURCES_SW})
-add_executable(execute_model_hw ${SOURCES_HW})
+
+if(UNIX AND NOT APPLE)
+    add_executable(execute_model_hw ${SOURCES_HW})
+    set(SOURCES_HW ${DIR_HW}/main.c)
+endif()
 
 target_link_libraries(execute_model_sw PRIVATE predict_lib)
 
