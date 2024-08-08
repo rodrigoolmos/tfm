@@ -27,8 +27,8 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
         tree_data tree_data;
 
         while(1){
+        #pragma HLS loop_tripcount min=1 max=N_NODE_AND_LEAFS
             tree_data.compact_data = tree[t][node_index];
-            #pragma HLS loop_tripcount min=1 max=N_NODE_AND_LEAFS
             feature_index = tree_data.tree_camps.feature_index;
             threshold = tree_data.tree_camps.float_int_union.f;
             node_left = node_index + 1;
