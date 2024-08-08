@@ -80,10 +80,11 @@ void load_model(
 }
 
 
-int read_n_features(const char *csv_file, int n, struct feature *features) {
+int read_n_features(const char *csv_file, int n, struct feature *features, uint32_t *features_length) {
     FILE *file = fopen(csv_file, "r");
     char line[MAX_LINE_LENGTH];
     int features_read = 0;
+    int index;
     int i;
 
     if (!file) {
@@ -94,7 +95,7 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
     while (fgets(line, MAX_LINE_LENGTH, file) && features_read < n) {
         float temp[N_FEATURE + 1];
         char *token = strtok(line, ",");
-        int index = 0;
+        index = 0;
 
         while (token != NULL && index < N_FEATURE + 1) {
             temp[index] = atof(token);
@@ -110,6 +111,8 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
         features_read++;
     }
 
+    *features_length = index;
+
     fclose(file);
     return features_read;
 }
@@ -124,11 +127,11 @@ void read_features(void *map_base, uint32_t data[N_FEATURE]){
     }
 }
 
-void send_features(void *map_base, uint32_t data[N_FEATURE]){
+void send_features(void *map_base, uint32_t data[N_FEATURE], uint32_t features_length){
     int i;
     void *virt_addr;
 
-    for (i = 0; i < N_FEATURE; i++){
+    for (i = 0; i < features_length; i++){
         virt_addr = map_base + BASE_ADDRES + FEATURES_ADDRES + sizeof(uint64_t)*i;
         *((uint32_t *) virt_addr) = data[i];
     }
@@ -190,7 +193,8 @@ void wait_done(void *map_base){
 }
 
 void evaluate_model_hardware(void *map_base, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS], 
-                            uint32_t n_samples, struct feature features[MAX_TEST_SAMPLES]){
+                            uint32_t n_samples, struct feature features[MAX_TEST_SAMPLES],
+                            uint32_t features_length){
 
     uint32_t status, i;
     clock_t start_time, end_time;
@@ -203,7 +207,7 @@ void evaluate_model_hardware(void *map_base, tree_data tree_data[N_TREES][N_NODE
     accuracy = 0;
     start_time = clock();
     for ( i = 0; i < n_samples; i++){
-        send_features(map_base, features[i].features);
+        send_features(map_base, features[i].features, features_length);
     
         start_prediction(map_base);
         wait_done(map_base);
@@ -221,6 +225,7 @@ void evaluate_model_hardware(void *map_base, tree_data tree_data[N_TREES][N_NODE
 int main() {
 
     int read_samples;
+    uint32_t features_length;
     int fd;
     void *map_base;
 
@@ -241,25 +246,25 @@ int main() {
         exit(1);
     }
     printf("Executing HW\n");
-    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
+    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features, &features_length);
     load_model(tree_data, "../trained_models/diabetes.model");
-    evaluate_model_hardware(map_base, tree_data, read_samples, features);
+    evaluate_model_hardware(map_base, tree_data, read_samples, features, features_length);
     
-    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
+    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features, &features_length);
     load_model(tree_data, "../trained_models/heart_attack.model");
-    evaluate_model_hardware(map_base, tree_data, read_samples, features);
+    evaluate_model_hardware(map_base, tree_data, read_samples, features, features_length);
 
-    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
     load_model(tree_data, "../trained_models/lung_cancer.model");
-    evaluate_model_hardware(map_base, tree_data, read_samples, features);
+    evaluate_model_hardware(map_base, tree_data, read_samples, features, features_length);
 
-    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
     load_model(tree_data, "../trained_models/anemia.model");
-    evaluate_model_hardware(map_base, tree_data, read_samples, features);
+    evaluate_model_hardware(map_base, tree_data, read_samples, features, features_length);
 
-    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
     load_model(tree_data, "../trained_models/alzheimers.model");
-    evaluate_model_hardware(map_base, tree_data, read_samples, features);
+    evaluate_model_hardware(map_base, tree_data, read_samples, features, features_length);
 
     return 0;
 }
