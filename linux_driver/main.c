@@ -176,7 +176,6 @@ void read_status(void *map_base, uint32_t *data){
     *data = *((uint32_t *) virt_addr);
 }
 
-
 void wait_done(void *map_base){
 
     void *virt_addr;
@@ -190,6 +189,18 @@ void wait_done(void *map_base){
         if (data&0x2)
             break;
     }
+}
+
+void perform_inference(void *map_base, uint32_t *features, 
+                        uint32_t features_length, uint32_t *prediction){
+
+    send_features(map_base, features, features_length);
+    
+    start_prediction(map_base);
+    wait_done(map_base);
+        
+    read_prediction(map_base, prediction);
+
 }
 
 void evaluate_model_hardware(void *map_base, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS], 
@@ -207,12 +218,9 @@ void evaluate_model_hardware(void *map_base, tree_data tree_data[N_TREES][N_NODE
     accuracy = 0;
     start_time = clock();
     for ( i = 0; i < n_samples; i++){
-        send_features(map_base, features[i].features, features_length);
-    
-        start_prediction(map_base);
-        wait_done(map_base);
+
+        perform_inference(map_base, features[i].features, features_length, &prediction);
         
-        read_prediction(map_base, &prediction);
         if (features[i].prediction == (prediction > 0))
             accuracy++;
     }
@@ -245,6 +253,7 @@ int main() {
         close(fd);
         exit(1);
     }
+
     printf("Executing HW\n");
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features, &features_length);
     load_model(tree_data, "../trained_models/diabetes.model");
