@@ -19,8 +19,8 @@ set(SOURCES_SW ${DIR_SW}/laod_and_execute_model.c)
 add_executable(execute_model_sw ${SOURCES_SW})
 
 if(UNIX AND NOT APPLE)
-    set(SOURCES_HW ${DIR_HW}/main.c)
-    add_executable(execute_model_hw ${SOURCES_HW})
+    set(SOURCES_HW ${DIR_HW}/memory_mapped.c)
+    add_executable(execute_model_hw_memory_mapped ${SOURCES_HW})
 endif()
 
 target_link_libraries(execute_model_sw PRIVATE predict_lib)

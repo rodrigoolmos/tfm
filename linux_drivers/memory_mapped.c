@@ -7,7 +7,7 @@
 #include <sys/mman.h>
 #include <errno.h>
 #include <time.h>
-#include "defines_wh.h"
+#include "defines_memoty_mapped.h"
 
 #define MAX_LINE_LENGTH 1024
 #define MAX_TEST_SAMPLES 3000
