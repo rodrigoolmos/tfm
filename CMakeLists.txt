@@ -5,7 +5,7 @@ project(laod_and_execute_model)
 set(CMAKE_C_STANDARD 99)
 
 set(DIR_SW ${CMAKE_SOURCE_DIR}/C_code_vitis)
-set(DIR_HW ${CMAKE_SOURCE_DIR}/linux_driver)
+set(DIR_HW ${CMAKE_SOURCE_DIR}/linux_drivers)
 
 set(LIB_SOURCES
     ${DIR_SW}/predict.c
@@ -19,7 +19,12 @@ set(SOURCES_SW ${DIR_SW}/laod_and_execute_model.c)
 add_executable(execute_model_sw ${SOURCES_SW})
 
 if(UNIX AND NOT APPLE)
-    set(SOURCES_HW ${DIR_HW}/memory_mapped.c)
+    set(SOURCES_HW ${DIR_HW}/dma/dma.c)
+    add_executable(execute_model_hw_dma ${SOURCES_HW})
+endif()
+
+if(UNIX AND NOT APPLE)
+    set(SOURCES_HW ${DIR_HW}/memory_mapped/memory_mapped.c)
     add_executable(execute_model_hw_memory_mapped ${SOURCES_HW})
 endif()
 
