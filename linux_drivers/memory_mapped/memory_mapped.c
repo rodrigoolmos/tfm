@@ -12,8 +12,6 @@
 #define MAX_LINE_LENGTH 1024
 #define MAX_TEST_SAMPLES 3000
 
-
-
 #define N_NODE_AND_LEAFS 256
 #define N_TREES 128
 #define N_FEATURE 32
