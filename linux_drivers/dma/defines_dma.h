@@ -15,7 +15,3 @@
 
 #define TREES_SIZE    0x2000  
 #define FEATURES_SIZE 32*8
-
-#define N_NODE_AND_LEAFS 256
-#define N_TREES 128
-#define N_FEATURE 32
