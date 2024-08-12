@@ -158,7 +158,7 @@ int main() {
         exit(1);
     }
 
-    printf("Executing HW\n");
+    printf("Executing HW MMIO !!!!!!!!!!!!!\n");
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features, &features_length);
     load_model(tree_data, "../trained_models/diabetes.model");
     evaluate_model_hardware(map_base, tree_data, read_samples, features, features_length);
