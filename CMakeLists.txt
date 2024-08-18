@@ -35,8 +35,14 @@ if(UNIX AND NOT APPLE)
     add_executable(execute_model_hw_memory_mapped ${SOURCES_HW})
 endif()
 
+if(UNIX AND NOT APPLE)
+    set(SOURCES_HW ${DIR_HW}/MIG_2_DDR3_DMA/main.c)
+    add_executable(execute_model_MIG ${SOURCES_HW})
+endif()
+
 target_link_libraries(execute_model_sw PRIVATE predict_lib)
 target_link_libraries(execute_model_hw_dma PRIVATE common_lib)
+target_link_libraries(execute_model_MIG PRIVATE common_lib)
 target_link_libraries(execute_model_hw_memory_mapped PRIVATE common_lib)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/trained_models)
