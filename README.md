@@ -17,12 +17,12 @@ Block design MMIO
 ![Block design3](vivado/memory_mapped/bd.png)
 
 
-├── C_code_vitis: with test and hls code
-│   ├── laod_and_execute_model.c
+├── C_code_vitis: Contains test and HLS code
+│   ├── load_and_execute_model.c
 │   ├── predict.c
 │   └── predict.h
 ├── CMakeLists.txt
-├── datasets: with the datasets on which to perform the inference
+├── datasets: Datasets used for inference
 │   ├── alzheimers_disease_data.csv
 │   ├── alzheimers_processed_dataset.csv
 │   ├── anemia.csv
@@ -31,34 +31,34 @@ Block design MMIO
 │   ├── Heart_Attack.csv
 │   ├── Lung_Cancer_processed_dataset.csv
 │   └── Lung_Cancer_raw.csv
-├── ips: contains the ips required for vivado block diagrams
+├── ips: Contains IPs required for Vivado block diagrams
 │   ├── export.zip
 │   └── pcie_axi_lite_IP.zip
-├── linux_drivers: contains all the c code to drive fpga from the pcie
-│   ├── common: common functions to all the c drivers
+├── linux_drivers: C code to drive the FPGA from PCIe
+│   ├── common: Common functions for all C drivers
 │   │   ├── common.c
 │   │   └── common.h
 │   ├── dma
 │   │   ├── defines_dma.h
 │   │   └── dma.c
 │   ├── memory_mapped
-│   │   ├── defines_memoty_mapped.h
+│   │   ├── defines_memory_mapped.h
 │   │   └── memory_mapped.c
 │   ├── MIG_2_DDR3_DMA
 │   │   ├── defines_dma.h
 │   │   └── main.c
 │   └── reload_resource.sh
-├── python_code: 
-│   ├── interface.py: attempt at a graphical interface
-│   └── train_model.py: trains the model and exports a binary in a format that allows inferences to be made
+├── python_code: Python code
+│   ├── interface.py: A graphical interface attempt
+│   └── train_model.py: Trains the model and exports a binary for inference
 ├── README.md
-├── trained_models: models already generated
+├── trained_models: Pre-trained models
 │   ├── alzheimers.model
 │   ├── anemia.model
 │   ├── diabetes.model
 │   ├── heart_attack.model
 │   └── lung_cancer.model
-└── vivado: contains all de bock diagrams in a tcl format so it can be rebuild
+└── vivado: Contains all block diagrams in TCL format for rebuilding
     ├── dma
     │   ├── bd.png
     │   ├── constrs_1
