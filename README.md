@@ -49,6 +49,8 @@ Block design MMIO
 │   │   ├── defines_dma.h
 │   │   └── main.c
 │   └── reload_resource.sh
+├── openCL: Contains an openCl implementation
+│   ├── main.c: openCl implementation
 ├── python_code: 
 │   ├── interface.py: attempt at a graphical interface
 │   └── train_model.py: trains the model and exports a binary in a format that allows inferences to be made
