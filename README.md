@@ -103,5 +103,5 @@ There is also an implementation on a GPU with OpenCL for comparison purposes.
 hardware implementation tested with the board sitlinv Kintex 7 XC7K325T and 2GB of ddr3 samsung M471B5773DH0-YK0
 
 BOARD
-![Block design1](vivado/MIG_version/BOARD.jpg)
+![Block design1](BOARD.jpg)
 
