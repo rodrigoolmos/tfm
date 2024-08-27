@@ -5,7 +5,10 @@ project(laod_and_execute_model)
 set(CMAKE_C_STANDARD 99)
 
 set(DIR_SW ${CMAKE_SOURCE_DIR}/C_code_vitis)
+set(DIR_OPENCL ${CMAKE_SOURCE_DIR}/openCL)
 set(DIR_HW ${CMAKE_SOURCE_DIR}/linux_drivers)
+
+find_package(OpenCL REQUIRED)
 
 set(LIB_SOURCES_SW
     ${DIR_SW}/predict.c
@@ -40,6 +43,11 @@ if(UNIX AND NOT APPLE)
     add_executable(execute_model_MIG ${SOURCES_HW})
 endif()
 
+set(SOURCES_OPENCL ${DIR_OPENCL}/main.c)
+
+add_executable(execute_model_openCL ${SOURCES_OPENCL})
+
+target_link_libraries(execute_model_openCL PRIVATE OpenCL::OpenCL common_lib)
 target_link_libraries(execute_model_sw PRIVATE predict_lib)
 target_link_libraries(execute_model_hw_dma PRIVATE common_lib)
 target_link_libraries(execute_model_MIG PRIVATE common_lib)
