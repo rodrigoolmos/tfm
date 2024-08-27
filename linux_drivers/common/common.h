@@ -32,3 +32,8 @@ typedef union {
     struct tree_camps tree_camps;
     uint64_t compact_data;
 } tree_data;
+
+
+int read_n_features(const char *csv_file, int n, struct feature *features, uint32_t *features_length);
+
+void load_model(tree_data tree_data[N_TREES][N_NODE_AND_LEAFS], const char *filename);
