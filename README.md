@@ -1,7 +1,7 @@
 # tfm
-this repository contains all the TFM documents and programs
+This repository contains all the TFM documents and programs.
 
-There are different hardware implementations based on a hardware accelerator based on “Boosting” type decision trees trained with lightgbm and converted to hardware with vitis hls and its subsequent implementation with vivado.
+There are different hardware implementations based on a hardware accelerator that uses “Boosting” type decision trees, trained with LightGBM and converted to hardware using Vitis HLS, followed by subsequent implementation with Vivado.
 
 hardware implementations:
 
@@ -16,6 +16,7 @@ Block design XDMA
 Block design MMIO
 ![Block design3](vivado/memory_mapped/bd.png)
 
+There is also an implementation on a GPU with OpenCL for comparison purposes.
 
 ```plaintext
 ├── C_code_vitis: with test and hls code
