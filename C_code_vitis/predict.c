@@ -4,22 +4,23 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
             float bram_features[MAX_BURST_FEATURES][N_FEATURE], 
             int32_t prediction[MAX_BURST_FEATURES], uint8_t *features_burst_length){
 
-	#pragma HLS TOP name=predict
-
-	#pragma HLS INTERFACE mode=s_axilite port=prediction bundle=prediction
-	#pragma HLS INTERFACE mode=s_axilite port=features bundle=features
-	#pragma HLS INTERFACE mode=s_axilite port=tree bundle=tree
-	#pragma HLS INTERFACE s_axilite port=return bundle=control
-
-	#pragma HLS ARRAY_PARTITION dim=1 factor=N_TREES/2 type=block variable=tree
-	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=features
-
     int32_t leaf_value;
     float local_features[N_FEATURE];
 
-    for (int j = 0; j < *features_burst_length; j++){
+	#pragma HLS TOP name=predict
+	#pragma HLS INTERFACE mode=s_axilite port=prediction bundle=prediction
+	#pragma HLS INTERFACE mode=s_axilite port=bram_features bundle=bram_features
+	#pragma HLS INTERFACE mode=s_axilite port=tree bundle=tree
+	#pragma HLS INTERFACE s_axilite port=return bundle=control
+	#pragma HLS ARRAY_PARTITION dim=1 factor=N_TREES type=block variable=tree
+	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=local_features
 
-        for (int i = 0; i < N_FEATURE; i++){
+
+
+    burst_loop:for (int j = 0; j < *features_burst_length; j++){
+	#pragma HLS loop_tripcount min=1 max=MAX_BURST_FEATURES
+
+        coppy_loop:for (int i = 0; i < N_FEATURE; i++){
             local_features[i] = bram_features[j][i];
         }
         

@@ -35,6 +35,7 @@ set(SOURCES_SW ${DIR_SW}/laod_and_execute_model.c)
 add_executable(execute_model_sw ${SOURCES_SW})
 
 if(UNIX AND NOT APPLE)
+
     set(SOURCES_HW ${DIR_HW}/dma/dma.c)
     add_executable(execute_model_hw_dma ${SOURCES_HW})
 
