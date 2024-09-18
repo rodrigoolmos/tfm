@@ -87,18 +87,40 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
                     struct feature *features, int read_samples){
 
     int accuracy = 0;
-    int32_t prediction;
+    int evaluated = 0;
+    int32_t prediction[MAX_BURST_FEATURES];
+    float features_burst[MAX_BURST_FEATURES][N_FEATURE];
+    uint8_t burst_size;
     clock_t start_time, end_time;
     double cpu_time_used;
     start_time = clock();
+    burst_size = MAX_BURST_FEATURES;
+    int ceil_div = (read_samples + MAX_BURST_FEATURES - 1) / MAX_BURST_FEATURES;
 
-    for (size_t i = 0; i < read_samples; i++){
-        predict(tree, features[i].features, &prediction);
-        if (features[i].prediction == (prediction > 0))
-            accuracy++;
+    for (int i = 0; i < ceil_div; i++){
+        if (i == ceil_div -1){
+            if (0 != read_samples % MAX_BURST_FEATURES){
+                burst_size = read_samples % MAX_BURST_FEATURES;
+            }
+            
+        }
+
+        for (int j = 0; j < burst_size; j++){
+                memcpy(features_burst[j], features[i * MAX_BURST_FEATURES + j].features, sizeof(float) *N_FEATURE);
+        }
+        
+        predict(tree, features_burst, prediction, &burst_size);
+
+        for (int j = 0; j < burst_size; j++){
+            if (features[i * MAX_BURST_FEATURES + j].prediction == (prediction[j] > 0)){
+                accuracy++;
+            }
+            evaluated++;
+        }
+
     }
 
-    printf("Accuracy %f\n", 1.0 * accuracy / read_samples);
+    printf("Accuracy %f evaluates samples %i of %i\n", 1.0 * accuracy / read_samples, evaluated, read_samples);
     end_time = clock();
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     printf("Tiempo de ejecucion por feature: %f segundos\n", cpu_time_used / read_samples);
