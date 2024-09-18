@@ -2,7 +2,7 @@
 
 void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
             float bram_features[MAX_BURST_FEATURES][N_FEATURE], 
-            int32_t prediction[MAX_BURST_FEATURES], uint8_t *features_burst_length){
+            int32_t prediction[MAX_BURST_FEATURES], int32_t *features_burst_length){
 
     int32_t leaf_value;
     float local_features[N_FEATURE];
@@ -15,11 +15,9 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
 	#pragma HLS ARRAY_PARTITION dim=1 factor=N_TREES type=block variable=tree
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=local_features
 
-
-
     burst_loop:for (int j = 0; j < *features_burst_length; j++){
 	#pragma HLS loop_tripcount min=1 max=MAX_BURST_FEATURES
-
+        // preguntar como hacer que sea ping pong buffer
         coppy_loop:for (int i = 0; i < N_FEATURE; i++){
             local_features[i] = bram_features[j][i];
         }

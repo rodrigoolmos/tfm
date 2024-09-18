@@ -90,11 +90,11 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
     int evaluated = 0;
     int32_t prediction[MAX_BURST_FEATURES];
     float features_burst[MAX_BURST_FEATURES][N_FEATURE];
-    uint8_t burst_size;
+    int32_t burst_size = MAX_BURST_FEATURES;
     clock_t start_time, end_time;
     double cpu_time_used;
     start_time = clock();
-    burst_size = MAX_BURST_FEATURES;
+
     int ceil_div = (read_samples + MAX_BURST_FEATURES - 1) / MAX_BURST_FEATURES;
 
     for (int i = 0; i < ceil_div; i++){
