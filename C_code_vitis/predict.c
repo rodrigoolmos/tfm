@@ -8,9 +8,10 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
     float local_features[N_FEATURE];
 
 	#pragma HLS TOP name=predict
-	#pragma HLS INTERFACE mode=s_axilite port=prediction bundle=prediction
-	#pragma HLS INTERFACE mode=s_axilite port=bram_features bundle=bram_features
+	#pragma HLS INTERFACE mode=bram port=prediction
+	#pragma HLS INTERFACE mode=bram port=bram_features
 	#pragma HLS INTERFACE mode=s_axilite port=tree bundle=tree
+	#pragma HLS INTERFACE mode=s_axilite port=features_burst_length bundle=control
 	#pragma HLS INTERFACE s_axilite port=return bundle=control
 	#pragma HLS ARRAY_PARTITION dim=1 factor=N_TREES type=block variable=tree
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=local_features
@@ -35,7 +36,7 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
             tree_data tree_data;
 
             while(1){
-            #pragma HLS loop_tripcount min=1 max=N_NODE_AND_LEAFS
+            #pragma HLS loop_tripcount min=1 max=8
                 tree_data.compact_data = tree[t][node_index];
                 feature_index = tree_data.tree_camps.feature_index;
                 threshold = tree_data.tree_camps.float_int_union.f;
