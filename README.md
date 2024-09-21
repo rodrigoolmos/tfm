@@ -55,6 +55,12 @@ There is also an implementation on a GPU with OpenCL for comparison purposes.
 ├── python_code: 
 │   ├── interface.py: attempt at a graphical interface
 │   └── train_model.py: trains the model and exports a binary in a format that allows inferences to be made
+├── system_tb: contains all the necesary files for make a system tb
+│   ├── alzheimer.model_tb
+│   ├── alzheimers_processed_dataset.bin_tb
+│   ├── design_1.tcl
+│   ├── system_bd.png
+│   └── top_tb.vhd
 ├── README.md
 ├── trained_models: models already generated
 │   ├── alzheimers.model
@@ -62,7 +68,7 @@ There is also an implementation on a GPU with OpenCL for comparison purposes.
 │   ├── diabetes.model
 │   ├── heart_attack.model
 │   └── lung_cancer.model
-└── vivado: contains all de bock diagrams in a tcl format so it can be rebuild
+└── vivado: contains all the bock diagrams in a tcl format so it can be rebuild
     ├── dma
     │   ├── bd.png
     │   ├── constrs_1
