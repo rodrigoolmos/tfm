@@ -3,7 +3,7 @@
 #define N_NODE_AND_LEAFS 256    // Adjust according to the maximum number of nodes and leaves in your trees
 #define N_TREES 32             	// Adjust according to the number of trees in your model
 #define N_FEATURE 32            // Adjust according to the number of features in your model
-#define MAX_BURST_FEATURES 256  // Adjust according to the number burst features
+#define MAX_BURST_FEATURES 128  // Adjust according to the number burst features
 
 typedef union {
     float f;
@@ -24,5 +24,9 @@ typedef union {
 } tree_data;
 
 void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
-            float bram_features[MAX_BURST_FEATURES][N_FEATURE], 
-            int32_t prediction[MAX_BURST_FEATURES], int32_t *features_burst_length);
+            float bram_features_ping[MAX_BURST_FEATURES][N_FEATURE],
+            float bram_features_pong[MAX_BURST_FEATURES][N_FEATURE], 
+            int32_t prediction_ping[MAX_BURST_FEATURES],
+            int32_t prediction_pong[MAX_BURST_FEATURES], 
+            int32_t *features_burst_length,
+            uint8_t ping_pong);

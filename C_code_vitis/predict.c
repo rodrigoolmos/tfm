@@ -1,8 +1,12 @@
 #include "predict.h"
 
 void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
-            float bram_features[MAX_BURST_FEATURES][N_FEATURE], 
-            int32_t prediction[MAX_BURST_FEATURES], int32_t *features_burst_length){
+            float bram_features_ping[MAX_BURST_FEATURES][N_FEATURE],
+            float bram_features_pong[MAX_BURST_FEATURES][N_FEATURE], 
+            int32_t prediction_ping[MAX_BURST_FEATURES],
+            int32_t prediction_pong[MAX_BURST_FEATURES], 
+            int32_t *features_burst_length,
+            uint8_t ping_pong){
 
     int32_t leaf_value;
     float local_features[N_FEATURE];
@@ -20,7 +24,7 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
 	#pragma HLS loop_tripcount min=1 max=MAX_BURST_FEATURES
         // preguntar como hacer que sea ping pong buffer
         coppy_loop:for (int i = 0; i < N_FEATURE; i++){
-            local_features[i] = bram_features[j][i];
+            local_features[i] = ping_pong & 0x01 ? bram_features_ping[j][i] : bram_features_pong[j][i];
         }
         
 	    int32_t sum = 0;
@@ -54,7 +58,13 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
             leaf_value = tree_data.tree_camps.float_int_union.i;
             sum += leaf_value;
         }
-        prediction[j] = sum;
-    }
 
+        if (ping_pong & 0x01 ){
+            prediction_ping[j] = sum;
+        }else{
+            prediction_pong[j] = sum;
+        }
+
+    }
+    
 }
