@@ -130,10 +130,10 @@ set bCheckIPsPassed 1
 set bCheckIPs 1
 if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
-rodrigo:predict:predict:1.0\
 xilinx.com:ip:blk_mem_gen:8.4\
 xilinx.com:ip:axi_bram_ctrl:4.1\
 xilinx.com:ip:smartconnect:1.0\
+rodrigo:predict:predict:1.0\
 "
 
    set list_ips_missing ""
@@ -247,9 +247,6 @@ proc create_root_design { parentCell } {
   set READ_VALID [ create_bd_port -dir O READ_VALID ]
   set SYSTEM_IDLE [ create_bd_port -dir O SYSTEM_IDLE ]
 
-  # Create instance: predict_0, and set properties
-  set predict_0 [ create_bd_cell -type ip -vlnv rodrigo:predict:predict:1.0 predict_0 ]
-
   # Create instance: axi_full_master_sim_0, and set properties
   set block_name axi_full_master_sim
   set block_cell_name axi_full_master_sim_0
@@ -280,14 +277,14 @@ proc create_root_design { parentCell } {
      return 1
    }
   
-  # Create instance: blk_mem_gen_0, and set properties
-  set blk_mem_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 blk_mem_gen_0 ]
-  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $blk_mem_gen_0
+  # Create instance: ping_features, and set properties
+  set ping_features [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 ping_features ]
+  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $ping_features
 
 
-  # Create instance: blk_mem_gen_1, and set properties
-  set blk_mem_gen_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 blk_mem_gen_1 ]
-  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $blk_mem_gen_1
+  # Create instance: pong_features_1, and set properties
+  set pong_features_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 pong_features_1 ]
+  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $pong_features_1
 
 
   # Create instance: axi_bram_ctrl_0, and set properties
@@ -303,22 +300,51 @@ proc create_root_design { parentCell } {
   # Create instance: smartconnect_0, and set properties
   set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
   set_property -dict [list \
-    CONFIG.NUM_MI {4} \
+    CONFIG.NUM_MI {6} \
     CONFIG.NUM_SI {2} \
   ] $smartconnect_0
 
 
+  # Create instance: ping_prediction, and set properties
+  set ping_prediction [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 ping_prediction ]
+  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $ping_prediction
+
+
+  # Create instance: pong_prediction, and set properties
+  set pong_prediction [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 pong_prediction ]
+  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $pong_prediction
+
+
+  # Create instance: axi_bram_ctrl_2, and set properties
+  set axi_bram_ctrl_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_2 ]
+  set_property CONFIG.SINGLE_PORT_BRAM {1} $axi_bram_ctrl_2
+
+
+  # Create instance: axi_bram_ctrl_3, and set properties
+  set axi_bram_ctrl_3 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_3 ]
+  set_property CONFIG.SINGLE_PORT_BRAM {1} $axi_bram_ctrl_3
+
+
+  # Create instance: predict_0, and set properties
+  set predict_0 [ create_bd_cell -type ip -vlnv rodrigo:predict:predict:1.0 predict_0 ]
+
   # Create interface connections
-  connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA] [get_bd_intf_pins blk_mem_gen_1/BRAM_PORTB]
-  connect_bd_intf_net -intf_net axi_bram_ctrl_1_BRAM_PORTA [get_bd_intf_pins axi_bram_ctrl_1/BRAM_PORTA] [get_bd_intf_pins blk_mem_gen_0/BRAM_PORTB]
+  connect_bd_intf_net -intf_net axi_bram_ctrl_2_BRAM_PORTA [get_bd_intf_pins axi_bram_ctrl_2/BRAM_PORTA] [get_bd_intf_pins ping_prediction/BRAM_PORTA]
+  connect_bd_intf_net -intf_net axi_bram_ctrl_3_BRAM_PORTA [get_bd_intf_pins axi_bram_ctrl_3/BRAM_PORTA] [get_bd_intf_pins pong_prediction/BRAM_PORTA]
   connect_bd_intf_net -intf_net axi_full_master_sim_0_M_AXI [get_bd_intf_pins axi_full_master_sim_0/M_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
   connect_bd_intf_net -intf_net master_axi_base_top_0_m00_axi [get_bd_intf_pins master_axi_base_top_0/m00_axi] [get_bd_intf_pins smartconnect_0/S01_AXI]
-  connect_bd_intf_net -intf_net predict_0_bram_features_PORTA [get_bd_intf_pins predict_0/bram_features_PORTA] [get_bd_intf_pins blk_mem_gen_0/BRAM_PORTA]
-  connect_bd_intf_net -intf_net predict_0_prediction_PORTA [get_bd_intf_pins predict_0/prediction_PORTA] [get_bd_intf_pins blk_mem_gen_1/BRAM_PORTA]
+  connect_bd_intf_net -intf_net predict_0_bram_features_PORTA [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA] [get_bd_intf_pins ping_features/BRAM_PORTA]
+  connect_bd_intf_net -intf_net predict_0_bram_features_ping_PORTA [get_bd_intf_pins ping_features/BRAM_PORTB] [get_bd_intf_pins predict_0/bram_features_ping_PORTA]
+  connect_bd_intf_net -intf_net predict_0_bram_features_pong_PORTA [get_bd_intf_pins pong_features_1/BRAM_PORTB] [get_bd_intf_pins predict_0/bram_features_pong_PORTA]
+  connect_bd_intf_net -intf_net predict_0_prediction_PORTA [get_bd_intf_pins axi_bram_ctrl_1/BRAM_PORTA] [get_bd_intf_pins pong_features_1/BRAM_PORTA]
+  connect_bd_intf_net -intf_net predict_0_prediction_ping_PORTA [get_bd_intf_pins ping_prediction/BRAM_PORTB] [get_bd_intf_pins predict_0/prediction_ping_PORTA]
+  connect_bd_intf_net -intf_net predict_0_prediction_pong_PORTA [get_bd_intf_pins pong_prediction/BRAM_PORTB] [get_bd_intf_pins predict_0/prediction_pong_PORTA]
   connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins axi_bram_ctrl_1/S_AXI]
   connect_bd_intf_net -intf_net smartconnect_0_M01_AXI [get_bd_intf_pins smartconnect_0/M01_AXI] [get_bd_intf_pins axi_bram_ctrl_0/S_AXI]
   connect_bd_intf_net -intf_net smartconnect_0_M02_AXI [get_bd_intf_pins smartconnect_0/M02_AXI] [get_bd_intf_pins predict_0/s_axi_control]
   connect_bd_intf_net -intf_net smartconnect_0_M03_AXI [get_bd_intf_pins smartconnect_0/M03_AXI] [get_bd_intf_pins predict_0/s_axi_tree]
+  connect_bd_intf_net -intf_net smartconnect_0_M04_AXI [get_bd_intf_pins axi_bram_ctrl_2/S_AXI] [get_bd_intf_pins smartconnect_0/M04_AXI]
+  connect_bd_intf_net -intf_net smartconnect_0_M05_AXI [get_bd_intf_pins axi_bram_ctrl_3/S_AXI] [get_bd_intf_pins smartconnect_0/M05_AXI]
 
   # Create port connections
   connect_bd_net -net BASE_ARADDR_1 [get_bd_ports BASE_ARADDR] [get_bd_pins axi_full_master_sim_0/BASE_ARADDR]
@@ -328,8 +354,8 @@ proc create_root_design { parentCell } {
   connect_bd_net -net M_AXI_WDATA_TB_1 [get_bd_ports M_AXI_WDATA_TB] [get_bd_pins axi_full_master_sim_0/M_AXI_WDATA_TB]
   connect_bd_net -net M_AXI_WSTRB_TB_1 [get_bd_ports M_AXI_WSTRB_TB] [get_bd_pins axi_full_master_sim_0/M_AXI_WSTRB_TB]
   connect_bd_net -net N_BURSTs_RW_1 [get_bd_ports N_BURSTs_RW] [get_bd_pins axi_full_master_sim_0/N_BURSTs_RW]
-  connect_bd_net -net Net [get_bd_ports nrst] [get_bd_pins master_axi_base_top_0/m00_axi_aresetn] [get_bd_pins axi_full_master_sim_0/M_AXI_ARESETN] [get_bd_pins axi_bram_ctrl_1/s_axi_aresetn] [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins predict_0/ap_rst_n] [get_bd_pins smartconnect_0/aresetn]
-  connect_bd_net -net Net1 [get_bd_ports CLK] [get_bd_pins master_axi_base_top_0/m00_axi_aclk] [get_bd_pins axi_full_master_sim_0/M_AXI_ACLK] [get_bd_pins predict_0/ap_clk] [get_bd_pins axi_bram_ctrl_1/s_axi_aclk] [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins smartconnect_0/aclk]
+  connect_bd_net -net Net [get_bd_ports nrst] [get_bd_pins master_axi_base_top_0/m00_axi_aresetn] [get_bd_pins axi_full_master_sim_0/M_AXI_ARESETN] [get_bd_pins axi_bram_ctrl_1/s_axi_aresetn] [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins smartconnect_0/aresetn] [get_bd_pins axi_bram_ctrl_2/s_axi_aresetn] [get_bd_pins axi_bram_ctrl_3/s_axi_aresetn] [get_bd_pins predict_0/ap_rst_n]
+  connect_bd_net -net Net1 [get_bd_ports CLK] [get_bd_pins master_axi_base_top_0/m00_axi_aclk] [get_bd_pins axi_full_master_sim_0/M_AXI_ACLK] [get_bd_pins axi_bram_ctrl_1/s_axi_aclk] [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins axi_bram_ctrl_2/s_axi_aclk] [get_bd_pins axi_bram_ctrl_3/s_axi_aclk] [get_bd_pins predict_0/ap_clk]
   connect_bd_net -net axi_full_master_sim_0_M_AXI_RDATA_TB [get_bd_pins axi_full_master_sim_0/M_AXI_RDATA_TB] [get_bd_ports M_AXI_RDATA_TB]
   connect_bd_net -net axi_full_master_sim_0_READ_VALID [get_bd_pins axi_full_master_sim_0/READ_VALID] [get_bd_ports READ_VALID]
   connect_bd_net -net axi_full_master_sim_0_SYSTEM_IDLE [get_bd_pins axi_full_master_sim_0/SYSTEM_IDLE] [get_bd_ports SYSTEM_IDLE]
@@ -344,12 +370,16 @@ proc create_root_design { parentCell } {
   connect_bd_net -net test_wdata_1 [get_bd_ports test_wdata] [get_bd_pins master_axi_base_top_0/test_wdata]
 
   # Create address segments
-  assign_bd_address -offset 0x00060000 -range 0x00002000 -target_address_space [get_bd_addr_spaces axi_full_master_sim_0/M_AXI] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x00060000 -range 0x00020000 -target_address_space [get_bd_addr_spaces axi_full_master_sim_0/M_AXI] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
   assign_bd_address -offset 0x00040000 -range 0x00020000 -target_address_space [get_bd_addr_spaces axi_full_master_sim_0/M_AXI] [get_bd_addr_segs axi_bram_ctrl_1/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x00080000 -range 0x00020000 -target_address_space [get_bd_addr_spaces axi_full_master_sim_0/M_AXI] [get_bd_addr_segs axi_bram_ctrl_2/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x00100000 -range 0x00020000 -target_address_space [get_bd_addr_spaces axi_full_master_sim_0/M_AXI] [get_bd_addr_segs axi_bram_ctrl_3/S_AXI/Mem0] -force
   assign_bd_address -offset 0x00000000 -range 0x00020000 -target_address_space [get_bd_addr_spaces axi_full_master_sim_0/M_AXI] [get_bd_addr_segs predict_0/s_axi_control/Reg] -force
   assign_bd_address -offset 0x00020000 -range 0x00020000 -target_address_space [get_bd_addr_spaces axi_full_master_sim_0/M_AXI] [get_bd_addr_segs predict_0/s_axi_tree/Reg] -force
   assign_bd_address -offset 0x00060000 -range 0x00020000 -target_address_space [get_bd_addr_spaces master_axi_base_top_0/m00_axi] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
   assign_bd_address -offset 0x00040000 -range 0x00020000 -target_address_space [get_bd_addr_spaces master_axi_base_top_0/m00_axi] [get_bd_addr_segs axi_bram_ctrl_1/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x00080000 -range 0x00020000 -target_address_space [get_bd_addr_spaces master_axi_base_top_0/m00_axi] [get_bd_addr_segs axi_bram_ctrl_2/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x00100000 -range 0x00020000 -target_address_space [get_bd_addr_spaces master_axi_base_top_0/m00_axi] [get_bd_addr_segs axi_bram_ctrl_3/S_AXI/Mem0] -force
   assign_bd_address -offset 0x00000000 -range 0x00020000 -target_address_space [get_bd_addr_spaces master_axi_base_top_0/m00_axi] [get_bd_addr_segs predict_0/s_axi_control/Reg] -force
   assign_bd_address -offset 0x00020000 -range 0x00020000 -target_address_space [get_bd_addr_spaces master_axi_base_top_0/m00_axi] [get_bd_addr_segs predict_0/s_axi_tree/Reg] -force
 

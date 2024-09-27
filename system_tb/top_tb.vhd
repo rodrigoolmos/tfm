@@ -30,16 +30,21 @@ architecture rtl of design_top_tb is
     
     constant period_time            : time    := 83333 ps;
     constant TREES_ADDR             : integer := 16#20800#;
-    constant FEATURES_ADDR          : integer := 16#40000#;
+    constant FEATURES_PING_ADDR     : integer := 16#60000#;
+    constant FEATURES_PONG_ADDR     : integer := 16#40000#;
     constant CNTR_N_FEATURES        : integer := 16#00010#;
+    constant CNTR_PING_PONG       : integer := 16#00018#;
     constant CONTROL_ADDR           : integer := 16#00000#;
-    constant PEDICTION_ADDR         : integer := 16#60000#;
+    constant PEDICTION_PING_ADDR    : integer := 16#80000#;
+    constant PEDICTION_PONG_ADDR    : integer := 16#100000#;
     constant n_trees                : integer := 32;
     constant tree_size              : integer := 256;
     constant max_process_trees      : integer := 256;
     constant burst_size             : integer := 256;
     constant n_features             : integer := 1024;
     constant features_size          : integer := 33;
+    constant ping                   : integer := 1;
+    constant pong                   : integer := 0;
     constant one_float              : std_logic_vector(31 downto 0) := x"3f800000";
 
 
@@ -140,7 +145,7 @@ architecture rtl of design_top_tb is
     procedure send_data_full(
         constant wr_addr        : integer;
         constant data_size      : integer;
-        signal data             : in word32;
+        signal data_in             : in word32;
         constant ram_offset     : integer;
         constant burst_size     : integer;
         signal N_BURSTs_RW0     : out STD_LOGIC_VECTOR ( 31 downto 0 );
@@ -170,11 +175,11 @@ architecture rtl of design_top_tb is
         wait until rising_edge(CLK);
         INIT_AXI_TXN0 <= '0';
         i := 0;
-        M_AXI_WDATA_TB0 <= data(i + ram_offset);
+        M_AXI_WDATA_TB0 <= data_in(i + ram_offset);
         loop
             wait until WRITE_VALID0 = '1' and rising_edge(CLK);
             i := i + 1;
-            M_AXI_WDATA_TB0 <= data(i + ram_offset);
+            M_AXI_WDATA_TB0 <= data_in(i + ram_offset);
             if i = data_size - 1 then
                 wait until WRITE_VALID0 = '1' and rising_edge(CLK);
                 M_AXI_WSTRB_TB0 <= (others => '0');
@@ -209,8 +214,8 @@ architecture rtl of design_top_tb is
     procedure read_data_full(
             constant rd_addr        : integer;
             constant data_size      : integer;
-            signal data             : out word32;
-            constant ram_offset : integer;
+            signal data_out         : out word32;
+            constant ram_offset     : integer;
             constant burst_size     : integer;
             signal N_BURSTs_RW0     : out STD_LOGIC_VECTOR ( 31 downto 0 );
             signal BASE_ARADDR0     : out STD_LOGIC_VECTOR ( 31 downto 0 );
@@ -239,7 +244,7 @@ architecture rtl of design_top_tb is
             loop
                 if i < data_size then
                     wait until READ_VALID0 = '1' and rising_edge(CLK);
-                    data(i + ram_offset) <= M_AXI_RDATA_TB0;
+                    data_out(i + ram_offset) <= M_AXI_RDATA_TB0;
                     i := i + 1;
                 else
                     wait until SYSTEM_IDLE0 = '1';
@@ -346,17 +351,83 @@ architecture rtl of design_top_tb is
 
         end procedure;
     
-        procedure evaluate_predictions (
-            constant n_features        : integer;
-            signal actual_prediction   : in word32;
-            signal expected_prediction : in word32
-
+        procedure start_ping_pong (
+            constant ping_pong              : integer;
+            signal m00_axi_init_axi_txn0    : out std_logic;
+            signal m00_axi_txn_ready0       : in  std_logic;
+            signal test_wdata0              : out std_logic_vector ( 31 downto 0 );
+            signal test_awaddr0             : out std_logic_vector ( 31 downto 0 )
         ) is
-            variable correct_predictions     : integer := 0;
-        begin
 
+        begin
+            -- tell to process PING o PONG
+            send_data_lite(ping_pong, CNTR_PING_PONG, m00_axi_init_axi_txn0, m00_axi_txn_ready0, test_wdata0, test_awaddr0);
+            -- tell to process max_process_trees featurees
+            send_data_lite(max_process_trees, CNTR_N_FEATURES, m00_axi_init_axi_txn0, m00_axi_txn_ready0, test_wdata0, test_awaddr0);
+            -- tell to start
+            send_data_lite(16#00000001#, CONTROL_ADDR, m00_axi_init_axi_txn0, m00_axi_txn_ready0, test_wdata0, test_awaddr0);
         end procedure;
 
+        procedure wait_end (
+            signal status                   : inout std_logic_vector ( 31 downto 0 );
+            signal m00_axi_init_axi_rxn0    : out std_logic;
+            signal m00_axi_rxn_ready0       : in  std_logic;
+            signal test_araddr0             : out std_logic_vector ( 31 downto 0 );
+            signal test_rdata0              : in std_logic_vector(31 downto 0)
+        ) is
+
+        begin
+            -- wait end
+            loop
+                recive_data_lite(status, CONTROL_ADDR, m00_axi_init_axi_rxn0, m00_axi_rxn_ready0, test_araddr0, test_rdata0);
+                if status(1) = '1' then
+                    exit;
+                end if;
+            end loop;
+        end procedure;
+
+        procedure send_features_ping_pong (
+            constant ping_pong      : integer;
+            constant offset         : integer;
+            signal N_BURSTs_RW0     : out STD_LOGIC_VECTOR ( 31 downto 0 );
+            signal BASE_AWADDR0     : out STD_LOGIC_VECTOR ( 31 downto 0 );
+            signal M_AXI_WSTRB_TB0  : out STD_LOGIC_VECTOR ( 3 downto 0 );
+            signal INIT_AXI_TXN0    : out STD_LOGIC;
+            signal M_AXI_WDATA_TB0  : out STD_LOGIC_VECTOR ( 31 downto 0 )
+        ) is
+        begin
+            if ping_pong = 1 then
+                send_data_full(FEATURES_PING_ADDR, 32 * max_process_trees, word32_features, offset, 
+                burst_size, N_BURSTs_RW0, BASE_AWADDR0, M_AXI_WSTRB_TB0,
+                INIT_AXI_TXN0, WRITE_VALID, SYSTEM_IDLE, M_AXI_WDATA_TB0);
+            else
+                send_data_full(FEATURES_PONG_ADDR, 32 * max_process_trees, word32_features, offset, 
+                burst_size, N_BURSTs_RW0, BASE_AWADDR0, M_AXI_WSTRB_TB0,
+                INIT_AXI_TXN0, WRITE_VALID, SYSTEM_IDLE, M_AXI_WDATA_TB0);
+            end if;
+        end procedure;
+
+        procedure read_results_ping_pong (
+            constant ping_pong      : integer;
+            constant offset         : integer;
+            signal data_out         : out word32;
+            signal N_BURSTs_RW0     : out STD_LOGIC_VECTOR ( 31 downto 0 );
+            signal BASE_ARADDR0     : out STD_LOGIC_VECTOR ( 31 downto 0 );
+            signal INIT_AXI_RXN0    : out STD_LOGIC
+        ) is
+        begin
+
+            if ping_pong = 1 then
+                read_data_full(PEDICTION_PING_ADDR, max_process_trees, 
+                    data_out, offset, burst_size, N_BURSTs_RW0, BASE_ARADDR0, 
+                    INIT_AXI_RXN0, READ_VALID, M_AXI_RDATA_TB, SYSTEM_IDLE);
+            else
+                read_data_full(PEDICTION_PONG_ADDR, max_process_trees, 
+                    data_out, offset, burst_size, N_BURSTs_RW0, BASE_ARADDR0, 
+                    INIT_AXI_RXN0, READ_VALID, M_AXI_RDATA_TB, SYSTEM_IDLE);
+            end if;
+
+        end procedure;
 
     begin
     clk_proc: process
@@ -407,32 +478,39 @@ architecture rtl of design_top_tb is
                     TREES_ADDR + 8 * i + 4, m00_axi_init_axi_txn, m00_axi_txn_ready, test_wdata, test_awaddr);
         end loop;
 
-        -- process 64 features de 32 elementos
-        send_data_full(FEATURES_ADDR, 32 * n_features, word32_features, 0, 
-                        burst_size, N_BURSTs_RW, BASE_AWADDR, M_AXI_WSTRB_TB,
-                        INIT_AXI_TXN, WRITE_VALID, SYSTEM_IDLE, M_AXI_WDATA_TB);
+        send_features_ping_pong(ping, 0, N_BURSTs_RW, BASE_AWADDR, M_AXI_WSTRB_TB, INIT_AXI_TXN, M_AXI_WDATA_TB);
 
-        -- -- tell to process 64 featurees
-        send_data_lite(max_process_trees, CNTR_N_FEATURES, m00_axi_init_axi_txn, m00_axi_txn_ready, test_wdata, test_awaddr);
+        start_ping_pong(ping, m00_axi_init_axi_txn, m00_axi_txn_ready, test_wdata, test_awaddr);
 
-        -- -- tell to start
-        send_data_lite(16#00000001#, CONTROL_ADDR, m00_axi_init_axi_txn, m00_axi_txn_ready, test_wdata, test_awaddr);
+        send_features_ping_pong(pong, 32 * max_process_trees, N_BURSTs_RW, BASE_AWADDR, M_AXI_WSTRB_TB, INIT_AXI_TXN, M_AXI_WDATA_TB);
+     
+        wait_end(read_status, m00_axi_init_axi_rxn, m00_axi_rxn_ready, test_araddr, test_rdata);
         
-        -- wait end
-        loop
-            recive_data_lite(read_status, CONTROL_ADDR, m00_axi_init_axi_rxn, m00_axi_rxn_ready, test_araddr, test_rdata);
-            if read_status(1) = '1' then
-                exit;
-            end if;
-        end loop; --      
-        
-        -- -- Colect results
-        read_data_full(PEDICTION_ADDR, max_process_trees, word32_results, 0, burst_size, N_BURSTs_RW, BASE_ARADDR, 
-                    INIT_AXI_RXN, READ_VALID, M_AXI_RDATA_TB, SYSTEM_IDLE);
+        read_results_ping_pong(ping, 0, word32_results, N_BURSTs_RW, BASE_ARADDR, INIT_AXI_RXN);
 
+        start_ping_pong(pong, m00_axi_init_axi_txn, m00_axi_txn_ready, test_wdata, test_awaddr);
 
-        for r in 0 to max_process_trees loop
+        send_features_ping_pong(ping, 32 * max_process_trees * 2, N_BURSTs_RW, BASE_AWADDR, M_AXI_WSTRB_TB, INIT_AXI_TXN, M_AXI_WDATA_TB);
+
+        wait_end(read_status, m00_axi_init_axi_rxn, m00_axi_rxn_ready, test_araddr, test_rdata);
         
+        read_results_ping_pong(pong, 256, word32_results, N_BURSTs_RW, BASE_ARADDR, INIT_AXI_RXN);
+
+        start_ping_pong(ping, m00_axi_init_axi_txn, m00_axi_txn_ready, test_wdata, test_awaddr);
+
+        send_features_ping_pong(pong, 32 * max_process_trees * 3, N_BURSTs_RW, BASE_AWADDR, M_AXI_WSTRB_TB, INIT_AXI_TXN, M_AXI_WDATA_TB);
+
+        wait_end(read_status, m00_axi_init_axi_rxn, m00_axi_rxn_ready, test_araddr, test_rdata);
+
+        read_results_ping_pong(ping, 512, word32_results, N_BURSTs_RW, BASE_ARADDR, INIT_AXI_RXN);
+
+        start_ping_pong(pong, m00_axi_init_axi_txn, m00_axi_txn_ready, test_wdata, test_awaddr);
+        wait_end(read_status, m00_axi_init_axi_rxn, m00_axi_rxn_ready, test_araddr, test_rdata);
+
+        read_results_ping_pong(pong, 512 + 256, word32_results, N_BURSTs_RW, BASE_ARADDR, INIT_AXI_RXN);
+
+        -- test results
+        for r in 0 to max_process_trees * 4 - 1 loop
             if (to_integer(unsigned(word32_results(r))) <= 0 and word32_predictions(r) = x"00000000") or 
                (to_integer(unsigned(word32_results(r))) > 0 and word32_predictions(r) = one_float)
             then
@@ -441,8 +519,8 @@ architecture rtl of design_top_tb is
                 error_predictions := error_predictions + 1;
             end if;
         end loop;
-        report "Correct predictions " & integer'image(correct_predictions) & " of "  & integer'image(max_process_trees); 
-        report "Error predictions " & integer'image(error_predictions) & " of "  & integer'image(max_process_trees); 
+        report "Correct predictions " & integer'image(correct_predictions) & " of "  & integer'image(max_process_trees * 2); 
+        report "Error predictions " & integer'image(error_predictions) & " of "  & integer'image(max_process_trees * 2); 
         wait for 10 us;
         finished <= '1';
         
