@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from graphviz import Digraph
 from collections import deque
 import struct
+import argparse
+import os
 
 #######################################################
 ##                                                   ##
@@ -133,57 +135,43 @@ def preprocess_data(data):
                   'Yes': 1, 'No': 0, 'YES': 1, 'NO': 0}, inplace=True)
     return data
 
-# Load the diabetes dataset
-path = "./datasets/diabetes.csv"
-column_names = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
-data = pd.read_csv(path, names=column_names)
-train_model_parse_and_store(data, "./trained_models/diabetes.model", num_trees=512, learning_rate=0.5, n_jobs=72, test_size=0.2, max_depth = 8)
+parser = argparse.ArgumentParser(description="Trains a model and exports it in a specific format"
+                                 " $(dataset_name).model\n"
+                                 "The dataset must be preprocessed beforehand, converting"
+                                 " non-numerical features to numerical values.\n"
+                                 "Command ej:\n"
+                                 "python train_model.py --path \"ruta/dataset.csv\""
+                                 "--column_name GENDER AGE SMOKING YELLOW_FINGERS ANXIETY PEER_PRESSURE"
+                                 " CHRONIC_DISEASE FATIGUE ALLERGY WHEEZING ALCOHOL_CONSUMING COUGHING "
+                                 "SHORTNESS_OF_BREATH SWALLOWING_DIFFICULTY CHEST_PAIN Outcome --num_trees 100"
+                                 "  --learning_rate 0.01 --n_jobs 4 --test_size 0.2 --max_depth 10",
+                                 formatter_class=argparse.RawTextHelpFormatter)
 
-# Load the Heart Attack dataset
-path = "./datasets/Heart_Attack.csv"
-column_names = ['age', 'sex', 'cp', 'trtbps', 'chol', 'fbs', 'restecg', 'thalachh', 'exng', 'oldpeak', 'slp', 'caa', 'thall', 'Outcome']
-data = pd.read_csv(path, names=column_names)
-train_model_parse_and_store(data, "./trained_models/heart_attack.model", num_trees=512, learning_rate=0.5, n_jobs=72, test_size=0.2, max_depth = 8)
+parser.add_argument('--path', type=str, help="Path to the CSV dataset ./my_path/my_dataset.csv")
+parser.add_argument('--column_names', nargs='+', type=str, 
+                    help="List of column names, the prediction column should be labeled as an [Outcome]\n"
+                    "Example:\n"
+                    "features1 | features2 | features3 | ... featuresN | prediction\n"
+                    "---------------------------------------------------------------\n"
+                    " glucose  | creatine  |    HDL    | ...   LDL     |   Outcome")
+parser.add_argument('--num_trees', type=int, help="LGBMClassifier number of trees for the model 2, 4, 8, 12")
+parser.add_argument('--learning_rate', type=float, help="LGBMClassifier learning rate for the model")
+parser.add_argument('--n_jobs', type=int, help="LGBMClassifier number of CPU cores to use")
+parser.add_argument('--test_size', type=float, help="LGBMClassifier proportion of the dataset to use for testing; Ej 0.2 0.3 etc")
+parser.add_argument('--max_depth', type=int, help="LGBMClassifier maximum depth of the trees suported <= 8")
 
-# Load the Lung Cancer raw dataset
-path = "./datasets/Lung_Cancer_raw.csv"
-column_names = ['GENDER', 'AGE', 'SMOKING', 'YELLOW_FINGERS', 'ANXIETY', 'PEER_PRESSURE', 'CHRONIC_DISEASE', 'FATIGUE', 'ALLERGY', 
-                'WHEEZING', 'ALCOHOL_CONSUMING', 'COUGHING', 'SHORTNESS_OF_BREATH', 'SWALLOWING_DIFFICULTY', 'CHEST_PAIN', 'Outcome']
-data = pd.read_csv(path, names=column_names)
-# This dataset has strings so it needs preprocessing
-processed_data = preprocess_data(data)
-# Save the transformed DataFrame in a new CSV file
-output_path = "./datasets/Lung_Cancer_processed_dataset.csv"
-processed_data.to_csv(output_path, index=False, header=False)
-train_model_parse_and_store(processed_data, "./trained_models/lung_cancer.model", num_trees=512, learning_rate=0.5, n_jobs=72, test_size=0.1, max_depth = 8)
+args = parser.parse_args()
 
-# Load the anemia dataset
-path = "./datasets/anemia.csv"
-column_names = ['Number', 'Sex', 'Red_Pixel', 'Green_pixel', 'Blue_pixel', 'Hb', 'Outcome']
-data = pd.read_csv(path, names=column_names)
-# First column is useless info so eliminate it
-sorted_data = data.iloc[:, 1:]
-# This dataset has strings so it needs preprocessing
-processed_data = preprocess_data(sorted_data)
-# Save the transformed DataFrame in a new CSV file
-output_path = "./datasets/anemia_processed_dataset.csv"
-processed_data.to_csv(output_path, index=False, header=False)
-train_model_parse_and_store(processed_data, "./trained_models/anemia.model", num_trees=512, learning_rate=0.5, n_jobs=72, test_size=0.6, max_depth = 8)
+print(f"Path to the dataset: {args.path}")
+print(f"Column names: {args.column_names}")
+print(f"Number of trees: {args.num_trees}")
+print(f"Learning rate: {args.learning_rate}")
+print(f"Number of CPU cores: {args.n_jobs}")
+print(f"Test size: {args.test_size}")
+print(f"Maximum tree depth: {args.max_depth}")
 
-# Load the alzheimers dataset
-path = "./datasets/alzheimers_disease_data.csv"
-column_names = ['PatientID',  'Age',  'Gender',  'Ethnicity',  'EducationLevel',  'BMI',  'Smoking',  'AlcoholConsumption',  'PhysicalActivity',
-                'DietQuality',  'SleepQuality',  'FamilyHistoryAlzheimers',  'CardiovascularDisease',  'Diabetes',  'Depression',  'HeadInjury',
-                'Hypertension',  'SystolicBP',  'DiastolicBP',  'CholesterolTotal',  'CholesterolLDL',  'CholesterolHDL',  'CholesterolTriglycerides',
-                'MMSE',  'FunctionalAssessment',  'MemoryComplaints',  'BehavioralProblems',  'ADL',  'Confusion',  'Disorientation',
-                'PersonalityChanges',  'DifficultyCompletingTasks',  'Forgetfulness',  'Outcome',  'DoctorInCharge']
-
-data = pd.read_csv(path, names=column_names)
-# First column is useless info so eliminate it
-sorted_data = data.iloc[:, 1:]
-# Last column is useless info so eliminate it
-sorted_data = sorted_data.iloc[:, :-1]
-# Save the transformed DataFrame in a new CSV file
-output_path = "./datasets/alzheimers_processed_dataset.csv"
-sorted_data.to_csv(output_path, index=False, header=False)
-train_model_parse_and_store(sorted_data, "./trained_models/alzheimers.model", num_trees=512, learning_rate=0.5, n_jobs=72, test_size=0.6, max_depth = 8)
+file_name = os.path.splitext(os.path.basename(args.path))[0]
+model_name = f"{file_name}.model"
+data = pd.read_csv(args.path, names=args.column_names)
+train_model_parse_and_store(data, model_name, args.num_trees, 
+                            args.learning_rate, args.n_jobs, args.test_size, args.max_depth)
