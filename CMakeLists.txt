@@ -19,6 +19,8 @@ endif()
 set(LIB_SOURCES_SW
     ${DIR_SW}/predict.c
     ${DIR_SW}/predict.h
+    ${DIR_SW}/generate_trees.c
+    ${DIR_SW}/generate_trees.h
 )
 
 set(LIB_SOURCES_HW

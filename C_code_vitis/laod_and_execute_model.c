@@ -3,7 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "predict.h"
+#include "generate_trees.h"
+
+#define TRAIN
+//#define EVALUATE
+
 
 #define MAX_LINE_LENGTH 1024
 #define MAX_COLUMNS 10
@@ -163,26 +167,60 @@ int main() {
     int read_samples;
     tree_data tree_data[N_TREES][N_NODE_AND_LEAFS];
 
+#ifdef EVALUATE
     printf("Executing SW\n");
+    printf("Executing diabetes.csv\n");
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
     load_model(tree_data, "../trained_models/diabetes.model");
     evaluate_model(tree_data, features, read_samples);
     
+    printf("Executing Heart_Attack.csv\n");
     read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
     load_model(tree_data, "../trained_models/heart_attack.model");
     evaluate_model(tree_data, features, read_samples);
 
+    printf("Executing Lung_Cancer_processed_dataset.csv\n");
     read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
     load_model(tree_data, "../trained_models/lung_cancer.model");
     evaluate_model(tree_data, features, read_samples);
 
+    printf("Executing anemia_processed_dataset.csv\n");
     read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
     load_model(tree_data, "../trained_models/anemia.model");
     evaluate_model(tree_data, features, read_samples);
 
+    printf("Executing alzheimers_processed_dataset.csv\n");
     read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
     load_model(tree_data, "../trained_models/alzheimers.model");
     evaluate_model(tree_data, features, read_samples);
+#endif
 
+#ifdef TRAIN
+    printf("Executing SW\n");
+    printf("Executing diabetes.csv\n");
+    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
+    generate_rando_trees(tree_data);
+    evaluate_model(tree_data, features, read_samples);
+    
+    printf("Executing Heart_Attack.csv\n");
+    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
+    generate_rando_trees(tree_data);
+    evaluate_model(tree_data, features, read_samples);
+
+    printf("Executing Lung_Cancer_processed_dataset.csv\n");
+    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    generate_rando_trees(tree_data);
+    evaluate_model(tree_data, features, read_samples);
+
+    printf("Executing anemia_processed_dataset.csv\n");
+    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    generate_rando_trees(tree_data);
+    evaluate_model(tree_data, features, read_samples);
+
+    printf("Executing alzheimers_processed_dataset.csv\n");
+    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    generate_rando_trees(tree_data);
+    evaluate_model(tree_data, features, read_samples);
+#endif
     return 0;
 }
