@@ -158,7 +158,7 @@ parser.add_argument('--num_trees', type=int, help="LGBMClassifier number of tree
 parser.add_argument('--learning_rate', type=float, help="LGBMClassifier learning rate for the model")
 parser.add_argument('--n_jobs', type=int, help="LGBMClassifier number of CPU cores to use")
 parser.add_argument('--test_size', type=float, help="LGBMClassifier proportion of the dataset to use for testing; Ej 0.2 0.3 etc")
-parser.add_argument('--max_depth', type=int, help="LGBMClassifier maximum depth of the trees suported <= 8")
+parser.add_argument('--max_depth', type=int, help="LGBMClassifier maximum depth of the trees suported < 8")
 
 args = parser.parse_args()
 
