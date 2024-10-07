@@ -5,7 +5,7 @@ uint8_t right_index[255] =  {128, 65, 34, 19, 12, 9, 8, 0, 0, 11, 0, 0, 16, 15, 
 
 float generate_threshold() {
     float random_f = (float)rand() / (float)RAND_MAX;
-    random_f *= 999.999999999999999;
+    random_f *= 9999.999999999999999;
     if (rand() % 2 == 0) {
         random_f *= -1;
     }
@@ -35,8 +35,38 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
             trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features);
             trees[tree_i][node_i].tree_camps.float_int_union.f = generate_threshold();
             trees[tree_i][node_i].tree_camps.leaf_or_node = 
-                                (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(10);
+                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30);
             trees[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
+        }
+    }
+}
+
+void mutate_tree(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS], 
+                 tree_data output_tree[N_TREES][N_NODE_AND_LEAFS],
+                 uint8_t n_features, float mutation_rate, 
+                 uint8_t n_trees){
+
+    srand(clock());
+    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
+        if ((float)rand() / (float)RAND_MAX < (mutation_rate / 2)) {
+            for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
+                output_tree[tree_i][node_i] = input_tree[tree_i][node_i];
+
+                if ((float)rand() / (float)RAND_MAX < mutation_rate) {
+                    output_tree[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features);
+                }
+
+                if ((float)rand() / (float)RAND_MAX < mutation_rate) {
+                    output_tree[tree_i][node_i].tree_camps.float_int_union.f = generate_threshold();
+                }
+
+                if ((float)rand() / (float)RAND_MAX < mutation_rate) {
+                    output_tree[tree_i][node_i].tree_camps.leaf_or_node = 
+                        (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30);
+                }
+
+                output_tree[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
+            }
         }
     }
 }
