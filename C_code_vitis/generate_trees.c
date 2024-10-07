@@ -5,7 +5,7 @@ uint8_t right_index[255] =  {128, 65, 34, 19, 12, 9, 8, 0, 0, 11, 0, 0, 16, 15, 
 
 float generate_threshold() {
     float random_f = (float)rand() / (float)RAND_MAX;
-    random_f *= 9.999999999999999;
+    random_f *= 999.999999999999999;
     if (rand() % 2 == 0) {
         random_f *= -1;
     }
@@ -25,20 +25,18 @@ uint8_t generate_feture_index(uint8_t feature_length) {
     return random_8;
 }
 
-void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS]){
-    srand(time(NULL));
+void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS], 
+                    uint8_t n_features, uint8_t n_trees){
 
-    for (uint32_t tree_i = 0; tree_i < N_TREES; tree_i++){
+    srand(clock());
+
+    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
         for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
-            trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(8);
+            trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features);
             trees[tree_i][node_i].tree_camps.float_int_union.f = generate_threshold();
-            if (right_index[node_i] == 0){
-                trees[tree_i][node_i].tree_camps.leaf_or_node = 0x00;
-            }else{
-                trees[tree_i][node_i].tree_camps.leaf_or_node = generate_leaf_node(20);
-            }
+            trees[tree_i][node_i].tree_camps.leaf_or_node = 
+                                (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(10);
             trees[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
-            trees[tree_i][node_i].tree_camps.padding = 'R';
         }
     }
 }
