@@ -87,6 +87,35 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
     return features_read;
 }
 
+void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS], 
+                    struct feature *features, int read_samples, 
+                    float *accuracy, uint8_t sow_log){
+
+    int correct = 0;
+    int32_t prediction[100000];
+    int32_t burst_size = 1;
+
+    int ceil_div = (read_samples + MAX_BURST_FEATURES - 1) / MAX_BURST_FEATURES;
+
+    for (int i = 0; i < read_samples; i++){  
+        predict(tree, NULL, features[i].features, NULL, &prediction, &burst_size, 0);
+    }
+
+    for (int j = 0; j < read_samples; j++){
+        if (features[j].prediction == (prediction[j] > 0)){
+            correct++;
+        }
+    }
+
+    *accuracy = (float) correct / read_samples;
+    
+    if (sow_log)
+        printf("Accuracy %f evaluates samples %i\n", 1.0 * accuracy[0], read_samples);
+    
+}
+
+
+
 void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS], 
                     struct feature *features, int read_samples){
 
@@ -162,10 +191,13 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
 }
 
 int main() {
-    float prediction;
+    float accuracy_actual = 0;
+    float accuracy_last = 0;
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
-    tree_data tree_data[N_TREES][N_NODE_AND_LEAFS];
+    tree_data tree_new[N_TREES][N_NODE_AND_LEAFS];
+    tree_data tree_golden[N_TREES][N_NODE_AND_LEAFS];
+
 
 #ifdef EVALUATE
     printf("Executing SW\n");
@@ -196,31 +228,24 @@ int main() {
 #endif
 
 #ifdef TRAIN
-    printf("Executing SW\n");
-    printf("Executing diabetes.csv\n");
+    printf("Training model diabetes.csv\n");
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
-    generate_rando_trees(tree_data);
-    evaluate_model(tree_data, features, read_samples);
-    
-    printf("Executing Heart_Attack.csv\n");
-    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
-    generate_rando_trees(tree_data);
-    evaluate_model(tree_data, features, read_samples);
 
-    printf("Executing Lung_Cancer_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    generate_rando_trees(tree_data);
-    evaluate_model(tree_data, features, read_samples);
+    generate_rando_trees(tree_new, 9, 128);
 
-    printf("Executing anemia_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    generate_rando_trees(tree_data);
-    evaluate_model(tree_data, features, read_samples);
+    for (int g = 0; g < 999999999999; g++){
+        execute_model(tree_new, features, read_samples, &accuracy_actual, 0);
+        if(accuracy_actual > accuracy_last){
+            memcpy(tree_golden, tree_new, N_TREES*N_NODE_AND_LEAFS);
+            accuracy_last = accuracy_actual;
+            printf("Mew golden generation\n");
+            execute_model(tree_new, features, read_samples, &accuracy_actual, 1);
+        }
+        generate_rando_trees(tree_new, 9, 128);
+        
+    }
 
-    printf("Executing alzheimers_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    generate_rando_trees(tree_data);
-    evaluate_model(tree_data, features, read_samples);
+
 #endif
     return 0;
 }
