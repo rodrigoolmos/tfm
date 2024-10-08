@@ -1,12 +1,11 @@
 #include "predict.h"
-#include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <float.h>
 
 
 void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS], 
