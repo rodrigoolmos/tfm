@@ -4,7 +4,7 @@ uint8_t right_index[255] =  {128, 65, 34, 19, 12, 9, 8, 0, 0, 11, 0, 0, 16, 15, 
 
 float generate_random_float() {
     float random_f = ((float) 2 * rand() / (float)RAND_MAX) - 1.0;
-    random_f *= 10;
+    random_f *= 100;
 
     return random_f;
 }
