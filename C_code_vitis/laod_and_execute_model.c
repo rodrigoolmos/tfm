@@ -7,7 +7,7 @@
 
 #define TRAIN
 //#define EVALUATE
-#define POPULATION 2048*16
+#define POPULATION 1024*16
 
 
 #define MAX_LINE_LENGTH 1024
@@ -279,28 +279,37 @@ int main() {
 #endif
 
 #ifdef TRAIN
-    printf("Training model anemia_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    printf("Training model diabetes.csv\n");
+    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
 
     for (uint32_t p = 0; p < POPULATION; p++)
-        generate_rando_trees(trees_population[p], 5, N_TREES);
+        generate_rando_trees(trees_population[p], 8, N_TREES);
 
-    while(population_accuracy[0] < 0.95){
-
+    while(population_accuracy[0] < 0.90){
+        clock_t start = clock();
         for (uint32_t p = 0; p < POPULATION; p++)
-            execute_model(trees_population[p], features, read_samples - 200, &population_accuracy[p], 0);
+            execute_model(trees_population[p], features, 500, &population_accuracy[p], 0);
 
         reorganize_population(population_accuracy, trees_population);
 
         for (uint32_t p = POPULATION - 1; p > 0; p--)
             printf("Popullation accuracy %i, %f\n", p, population_accuracy[p]);
 
-        for (uint32_t p = POPULATION/10; p < POPULATION; p++){
-            int index_tree = rand() % (POPULATION/10);
-            mutate_trees(trees_population[index_tree], trees_population[p], 
-                                5, (1 - population_accuracy[index_tree]), N_TREES);
+        for (uint32_t p = 2*POPULATION/3; p < POPULATION; p++){
+            int index_elite = rand() % (2*POPULATION/3);
+            mutate_trees(trees_population[index_elite], trees_population[p], 
+                                8, 1 - population_accuracy[index_elite], N_TREES);
         }
 
+        for (uint32_t p = POPULATION/3; p < 2*POPULATION/3; p++){
+            int index_mother = rand() % (POPULATION/3);
+            int index_father = rand() % (POPULATION/3);
+
+            reproducee_trees(trees_population[index_mother], trees_population[index_father],
+                                    trees_population[p], N_TREES);
+        }
+        clock_t end = clock();
+        printf("Execution time %f\n", ((float)end-start)/CLOCKS_PER_SEC);
     }
 
     evaluate_model(trees_population[0], &features[read_samples - 200], 200);

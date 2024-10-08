@@ -53,6 +53,6 @@ if(UNIX AND NOT APPLE)
 
 endif()
 
-target_link_libraries(execute_model_sw PRIVATE predict_lib)
+target_link_libraries(execute_model_sw PRIVATE predict_lib m)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/trained_models)
