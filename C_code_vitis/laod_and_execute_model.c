@@ -7,7 +7,7 @@
 
 #define TRAIN
 //#define EVALUATE
-#define POPULATION 1024*16
+#define POPULATION 1024*64
 
 
 #define MAX_LINE_LENGTH 1024
@@ -155,7 +155,7 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
     printf("Accuracy %f evaluates samples %i of %i\n", 1.0 * accuracy / read_samples, evaluated, read_samples);
     end_time = clock();
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-    printf("Tiempo de ejecucion por feature: %f segundos\n", cpu_time_used / read_samples);
+    //printf("Tiempo de ejecucion por feature: %f segundos\n", cpu_time_used / read_samples);
     
     
     // test ping
@@ -186,7 +186,7 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
     printf("Accuracy %f evaluates samples %i of %i\n", 1.0 * accuracy / read_samples, evaluated, read_samples);
     end_time = clock();
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-    printf("Tiempo de ejecucion por feature: %f segundos\n\n\n", cpu_time_used / read_samples);
+    //printf("Tiempo de ejecucion por feature: %f segundos\n\n\n", cpu_time_used / read_samples);
     
 }
 
@@ -237,18 +237,37 @@ void reorganize_population(float population_accuracy[POPULATION],
     quicksort(population_accuracy, trees_population, 0, POPULATION - 1);
 }
 
+void find_max_min_features(struct feature features[MAX_TEST_SAMPLES],
+                                float max_features[N_FEATURE], float min_features[N_FEATURE]) {
 
+    for (int j = 0; j < N_FEATURE; j++) {
+        max_features[j] = features[0].features[j];
+        min_features[j] = features[0].features[j];
+    }
+
+    for (int i = 1; i < MAX_TEST_SAMPLES; i++) {
+        for (int j = 0; j < N_FEATURE; j++) {
+            if (features[i].features[j] > max_features[j]) {
+                max_features[j] = features[i].features[j];
+            }
+            if (features[i].features[j] < min_features[j]) {
+                min_features[j] = features[i].features[j];
+            }
+        }
+    }
+}
 
 int main() {
     float population_accuracy[POPULATION] = {0};
-
+    float max_features[N_FEATURE];
+    float min_features[N_FEATURE];
 
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
     tree_data trees_test[N_TREES][N_NODE_AND_LEAFS];
     srand(clock());
-
+    float matrix_features[MAX_TEST_SAMPLES][N_FEATURE];
 
 #ifdef EVALUATE
     printf("Executing SW\n");
@@ -282,37 +301,46 @@ int main() {
     printf("Training model diabetes.csv\n");
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
 
-    for (uint32_t p = 0; p < POPULATION; p++)
-        generate_rando_trees(trees_population[p], 8, N_TREES);
+    find_max_min_features(features, max_features, min_features);
 
-    while(population_accuracy[0] < 0.90){
-        clock_t start = clock();
+    for (uint32_t p = 0; p < POPULATION; p++)
+        generate_rando_trees(trees_population[p], 8, N_TREES, max_features, min_features);
+
+    while(1){
+        clock_t start1 = clock();
         for (uint32_t p = 0; p < POPULATION; p++)
-            execute_model(trees_population[p], features, 500, &population_accuracy[p], 0);
+            execute_model(trees_population[p], features, read_samples - read_samples/2, &population_accuracy[p], 0);
+        clock_t start2 = clock();
 
         reorganize_population(population_accuracy, trees_population);
-
-        for (uint32_t p = POPULATION - 1; p > 0; p--)
+        /////////////////////////////// tests ///////////////////////////////
+        for (int32_t p = POPULATION - 1; p >= 0; p--)
             printf("Popullation accuracy %i, %f\n", p, population_accuracy[p]);
+        // out the training dataset
+        evaluate_model(trees_population[0], &features[read_samples - read_samples/2], read_samples/2);
+        /////////////////////////////////////////////////////////////////////
+        if(population_accuracy[0] >= 0.95)
+            break;
 
-        for (uint32_t p = 2*POPULATION/3; p < POPULATION; p++){
+        for (uint32_t p = POPULATION/2; p < POPULATION; p++){
             int index_elite = rand() % (2*POPULATION/3);
             mutate_trees(trees_population[index_elite], trees_population[p], 
-                                8, 1 - population_accuracy[index_elite], N_TREES);
+                                8, 1 - population_accuracy[p], N_TREES,
+                                    max_features, min_features);
         }
 
-        for (uint32_t p = POPULATION/3; p < 2*POPULATION/3; p++){
-            int index_mother = rand() % (POPULATION/3);
-            int index_father = rand() % (POPULATION/3);
+        for (uint32_t p = POPULATION/4; p < POPULATION/2; p++){
+            int index_mother = rand() % (POPULATION/4);
+            int index_father = rand() % (10);
 
             reproducee_trees(trees_population[index_mother], trees_population[index_father],
                                     trees_population[p], N_TREES);
         }
         clock_t end = clock();
-        printf("Execution time %f\n", ((float)end-start)/CLOCKS_PER_SEC);
+        printf("Execution time inference %f, rest %f\n", ((float)start2-start1)/CLOCKS_PER_SEC, ((float)end-start2)/CLOCKS_PER_SEC);
     }
 
-    evaluate_model(trees_population[0], &features[read_samples - 200], 200);
+    evaluate_model(trees_population[0], &features[read_samples - read_samples/2], read_samples/2);
 #endif
     return 0;
 }
