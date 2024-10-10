@@ -8,6 +8,8 @@
 #include <float.h>
 #include <limits.h>
 
+#define POPULATION 1024*64
+
 
 
 void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS], 

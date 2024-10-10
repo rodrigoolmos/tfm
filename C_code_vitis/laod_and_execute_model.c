@@ -3,11 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "generate_trees.h"
+#include "trees_managment.h"
 
 #define TRAIN
 //#define EVALUATE
-#define POPULATION 1024*64
 
 
 #define MAX_LINE_LENGTH 1024
@@ -267,7 +266,6 @@ int main() {
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
     tree_data trees_test[N_TREES][N_NODE_AND_LEAFS];
     srand(clock());
-    float matrix_features[MAX_TEST_SAMPLES][N_FEATURE];
 
 #ifdef EVALUATE
     printf("Executing SW\n");
@@ -316,7 +314,7 @@ int main() {
         /////////////////////////////// tests ///////////////////////////////
         for (int32_t p = POPULATION - 1; p >= 0; p--)
             printf("Popullation accuracy %i, %f\n", p, population_accuracy[p]);
-        // out the training dataset
+        // evaluation features from out the training dataset
         evaluate_model(trees_population[0], &features[read_samples - read_samples/2], read_samples/2);
         /////////////////////////////////////////////////////////////////////
         if(population_accuracy[0] >= 0.95)
@@ -329,13 +327,8 @@ int main() {
                                     max_features, min_features);
         }
 
-        for (uint32_t p = POPULATION/4; p < POPULATION/2; p++){
-            int index_mother = rand() % (POPULATION/4);
-            int index_father = rand() % (10);
+        crossover(trees_population);
 
-            reproducee_trees(trees_population[index_mother], trees_population[index_father],
-                                    trees_population[p], N_TREES);
-        }
         clock_t end = clock();
         printf("Execution time inference %f, rest %f\n", ((float)start2-start1)/CLOCKS_PER_SEC, ((float)end-start2)/CLOCKS_PER_SEC);
     }
