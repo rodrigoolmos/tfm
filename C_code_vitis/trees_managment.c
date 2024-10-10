@@ -120,3 +120,62 @@ void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]
     }
 
 }
+
+void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS],
+                        float population_accuracy[POPULATION], float max_features[N_FEATURE],
+                        float min_features[N_FEATURE], uint8_t n_features){
+
+    for (uint32_t p = POPULATION/2; p < POPULATION; p++){
+        int index_elite = rand() % (2*POPULATION/3);
+        mutate_trees(trees_population[index_elite], trees_population[p], 
+                            n_features, 1 - population_accuracy[p], N_TREES,
+                                max_features, min_features);
+    }
+}
+
+void swapf(float *a, float *b) {
+    float temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void swap_trees(tree_data trees1[N_TREES][N_NODE_AND_LEAFS], 
+                tree_data trees2[N_TREES][N_NODE_AND_LEAFS]) {
+    tree_data temp_trees[N_TREES][N_NODE_AND_LEAFS];
+    memcpy(temp_trees, trees1, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+    memcpy(trees1, trees2, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+    memcpy(trees2, temp_trees, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+}
+
+int partition(float population_accuracy[POPULATION], 
+              tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS], 
+              int low, int high) {
+    float pivot = population_accuracy[high];
+    int i = low - 1;
+    for (int j = low; j < high; j++) {
+        if (population_accuracy[j] > pivot) {
+            i++;
+            swapf(&population_accuracy[i], &population_accuracy[j]);
+            swap_trees(trees_population[i], trees_population[j]);
+        }
+    }
+    swapf(&population_accuracy[i + 1], &population_accuracy[high]);
+    swap_trees(trees_population[i + 1], trees_population[high]);
+    return i + 1;
+}
+
+void quicksort(float population_accuracy[POPULATION], 
+               tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS], 
+               int low, int high) {
+    if (low < high) {
+        int pi = partition(population_accuracy, trees_population, low, high);
+
+        quicksort(population_accuracy, trees_population, low, pi - 1);
+        quicksort(population_accuracy, trees_population, pi + 1, high);
+    }
+}
+
+void reorganize_population(float population_accuracy[POPULATION], 
+                    tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]) {
+    quicksort(population_accuracy, trees_population, 0, POPULATION - 1);
+}
