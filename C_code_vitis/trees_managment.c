@@ -4,7 +4,11 @@ uint8_t right_index[255] =  {128, 65, 34, 19, 12, 9, 8, 0, 0, 11, 0, 0, 16, 15, 
 
 float generate_random_float(float min, float max) {
     float random = (float)rand() / RAND_MAX;
-    return min + random * (max - min);
+
+    float distance = max - min;
+    float step = distance * 0.01; // 1% de la distancia
+
+    return min + round(random * (distance / step)) * step; // Multiplicamos por step para ajustar el paso
 }
 
 float generate_random_float_0_1() {
