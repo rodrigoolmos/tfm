@@ -262,20 +262,20 @@ int main() {
 #endif
 
 #ifdef TRAIN
-    printf("Training model Lung_Cancer_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    printf("Training model diabetes.csv\n");
+    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
 
     shuffle(features, read_samples);
 
     find_max_min_features(features, max_features, min_features);
 
     for (uint32_t p = 0; p < POPULATION; p++)
-        generate_rando_trees(trees_population[p], 15, N_TREES, max_features, min_features);
+        generate_rando_trees(trees_population[p], 8, N_TREES, max_features, min_features);
 
     while(1){
         clock_t start1 = clock();
         for (uint32_t p = 0; p < POPULATION; p++)
-            execute_model(trees_population[p], features, read_samples * 50/100, &population_accuracy[p], 0);
+            execute_model(trees_population[p], features, read_samples * 80/100, &population_accuracy[p], 0);
         clock_t start2 = clock();
 
         reorganize_population(population_accuracy, trees_population);
@@ -284,13 +284,13 @@ int main() {
         for (int32_t p = POPULATION - 1; p >= 0; p--)
             printf("Popullation accuracy %i, %f\n", p, population_accuracy[p]);
         // evaluation features from out the training dataset
-        evaluate_model(trees_population[0], &features[read_samples * 50/100], read_samples * 50/100);
+        evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
         /////////////////////////////////////////////////////////////////////
 
         if(population_accuracy[0] >= 0.95)
             break;
 
-        mutate_population(trees_population, population_accuracy, max_features, min_features, 15);
+        mutate_population(trees_population, population_accuracy, max_features, min_features, 8);
 
         crossover(trees_population);
 
@@ -298,7 +298,7 @@ int main() {
         printf("Execution time inference %f, rest %f\n", ((float)start2-start1)/CLOCKS_PER_SEC, ((float)end-start2)/CLOCKS_PER_SEC);
     }
 
-    evaluate_model(trees_population[0], &features[read_samples * 50/100], read_samples * 50/100);
+    evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
 #endif
     return 0;
 }
