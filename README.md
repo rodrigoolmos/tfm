@@ -5,6 +5,8 @@ There are different hardware implementations based on a hardware accelerator tha
 
 hardware implementations:
 
+Block design PING PONG buffers
+![Block design1](vivado/ping_pong_burst/bd.png)
 
 Block design MIG
 ![Block design1](vivado/MIG_version/bd.png)
