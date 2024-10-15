@@ -5,8 +5,8 @@
 #include <time.h>
 #include "trees_managment.h"
 
-#define TRAIN
-//#define EVALUATE
+//#define TRAIN
+#define EVALUATE
 
 
 #define MAX_LINE_LENGTH 1024
@@ -229,7 +229,6 @@ int main() {
 
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
-    tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
     tree_data trees_test[N_TREES][N_NODE_AND_LEAFS];
     srand(clock());
 
@@ -262,6 +261,9 @@ int main() {
 #endif
 
 #ifdef TRAIN
+
+    tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
+
     printf("Training model diabetes.csv\n");
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
 

@@ -1,7 +1,7 @@
 #define MAP_SIZE 0x20000
 
-#define PING 1
-#define PONG 0
+#define PING 0xff
+#define PONG 0x00
 
 #define FEATURES_PING_ADDR 0xC0000000
 #define FEATURES_PONG_ADDR 0xC2000000
@@ -15,5 +15,4 @@
 #define BURST_LENGTH_ADDR CONTROL_ADDR_BASE + 0x10
 #define PING_PONG_ADDR CONTROL_ADDR_BASE + 0x18
 
-#define TREES_SIZE    0x2000  
-#define FEATURES_SIZE 32*8
+#define MAX_BURST 256

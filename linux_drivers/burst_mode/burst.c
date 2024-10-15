@@ -32,13 +32,19 @@ void send_features_ping_pong(int fd_h2c, uint32_t* features, uint32_t n_features
         write_burst(fd_h2c, FEATURES_PONG_ADDR, features, n_features * N_FEATURE * sizeof(uint32_t));
 }
 
-void read_prediction_ping_pong(int fd_c2h, int32_t* predictions, uint32_t n_predictions, uint8_t ping_pong){
+void read_prediction_ping_pong(void *map_base, int fd_c2h, int32_t* predictions, uint32_t n_predictions, uint8_t ping_pong){
     
-    if (ping_pong)
+    if (ping_pong){
+        wait_done(map_base);
         read_burst(fd_c2h, PREDICTIONS_PING_ADDR, predictions, n_predictions * sizeof(uint32_t));
-    else
+
+    }
+    else{
+        wait_done(map_base);
         read_burst(fd_c2h, PREDICTIONS_PONG_ADDR, predictions, n_predictions * sizeof(uint32_t));
+    }
 }
+
 
 void send_trees(int fd_h2c, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS]){
 
@@ -66,6 +72,21 @@ void start_prediction(void *map_base){
 
     virt_addr = map_base + CONTROL_ADDR;
     *((uint32_t *) virt_addr) = 0x01;
+
+}
+
+void start_prediction_ping_pong(void *map_base, uint32_t ping_pong){
+    
+    if (ping_pong){
+        set_burst_len(map_base, 256);
+        set_ping_pong(map_base, PING);
+        start_prediction(map_base);
+    }else{
+        set_burst_len(map_base, 256);
+        set_ping_pong(map_base, PONG);
+        start_prediction(map_base);
+    }
+    
 
 }
 
@@ -107,6 +128,44 @@ void coppy_features_to_matrix(struct feature* features,
 
     for (uint32_t i = 0; i < features_length; i++)
         memcpy(raw_features[i], features[i].features, sizeof(uint32_t)*N_FEATURE);    
+
+}
+
+void burst_ping_pong_process(void *map_base, int fd_h2c, int fd_c2h, 
+                    uint32_t* raw_features, int32_t n_features_total, int32_t* inference){
+
+    uint8_t ping_pong = PING;
+    int32_t features_to_precess = 0;
+    int32_t features_index = 0;
+
+
+    if (n_features_total <= MAX_BURST){
+
+        send_features_ping_pong(fd_h2c, raw_features, n_features_total, ping_pong);
+        start_prediction_ping_pong(map_base, ping_pong);
+        read_prediction_ping_pong(map_base, fd_c2h, inference, MAX_BURST, ping_pong);
+
+    }else{
+
+        send_features_ping_pong(fd_h2c, raw_features, MAX_BURST, ping_pong);
+        start_prediction_ping_pong(map_base, ping_pong);
+        n_features_total = n_features_total - MAX_BURST;
+        features_index = features_index + MAX_BURST;
+        features_to_precess = n_features_total > MAX_BURST ? MAX_BURST : n_features_total;
+
+        while (n_features_total > 0){
+            send_features_ping_pong(fd_h2c, &raw_features[features_index], features_to_precess, ~ping_pong);
+            read_prediction_ping_pong(map_base, fd_c2h, &inference[features_index - features_to_precess], features_to_precess, ping_pong);
+            start_prediction_ping_pong(map_base, ~ping_pong);
+            ping_pong = ~ping_pong;
+            n_features_total = n_features_total - features_to_precess;
+            features_to_precess = n_features_total > MAX_BURST ? MAX_BURST : n_features_total;
+            features_index = features_index + features_to_precess;
+        }
+
+        read_prediction_ping_pong(map_base, fd_c2h, &inference[features_index - features_to_precess], features_to_precess, ~ping_pong);
+
+    }
 
 }
 
@@ -155,18 +214,11 @@ int main() {
 
     read_status(map_base, &status);
 
-    send_features_ping_pong(fd_h2c, raw_features, 256, PONG);
     send_trees(fd_h2c, tree_data);
 
-    set_burst_len(map_base, 256);
-    set_ping_pong(map_base, PONG);
-    start_prediction(map_base);
-    read_status(map_base, &status);
-    wait_done(map_base);
+    burst_ping_pong_process(map_base, fd_h2c, fd_c2h, raw_features, read_samples, inference);
 
-    read_prediction_ping_pong(fd_c2h, inference, 256, PONG);
-
-    for ( i = 0; i < 256; i++){
+    for ( i = 0; i < 512; i++){
         if (features[i].prediction == (inference[i] > 0))
             correct++;
     }
