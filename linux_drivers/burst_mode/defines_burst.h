@@ -1,7 +1,7 @@
 #define MAP_SIZE 0x20000
 
-#define PING 0xff
-#define PONG 0x00
+#define PING 0xffffffff
+#define PONG 0x00000000
 
 #define FEATURES_PING_ADDR 0xC0000000
 #define FEATURES_PONG_ADDR 0xC2000000
