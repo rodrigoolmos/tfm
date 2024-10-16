@@ -10,10 +10,10 @@ Block design PING PONG buffers implementation
 [Go to Linux example implementation](linux_drivers/README.md)
 
 # Building the system
-[Go to Linux example implementation](vivado/README.md)
+[Go to building the system](vivado/ping_pong_burst/README.md)
 
 # Training the model
-[Go to Linux example implementation](python_code/README.md)
+[Go to training the model](python_code/README.md)
 
 
 There is also an implementation on a GPU with OpenCL for comparison purposes.
