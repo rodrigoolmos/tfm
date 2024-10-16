@@ -53,6 +53,10 @@ int main() {
     load_model(tree_data, "../trained_models/diabetes.model");
     evaluate_model(fd_h2c, fd_c2h,tree_data, map_base, features, raw_features, inference, read_samples);
 
+    ///////////////////////////////////   example only inference   //////////////////////////
+    burst_ping_pong_process(map_base, fd_h2c, fd_c2h, raw_features, read_samples, inference);
+    /////////////////////////////////////////////////////////////////////////////////////////
+    
     load_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features, raw_features, &features_length, &read_samples);
     load_model(tree_data, "../trained_models/heart_attack.model");
     evaluate_model(fd_h2c, fd_c2h,tree_data, map_base, features, raw_features, inference, read_samples);
