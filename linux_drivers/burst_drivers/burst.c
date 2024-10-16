@@ -7,8 +7,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include "defines_burst.h"
-#include "../common/common.h"
+#include "burst.h"
 
 void wait_done(void *map_base){
 
@@ -122,7 +121,7 @@ void start_prediction_ping_pong(void *map_base, uint32_t ping_pong, uint32_t bur
 
 }
 
-void coppy_features_to_matrix(struct feature* features, 
+void copy_features_to_matrix(struct feature* features, 
                 uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE], uint32_t features_length){
 
 
@@ -188,79 +187,14 @@ void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_
             correct++;
     }
 
-    printf("Tiempo de ejecucion por 100 features: %f segundos\n", (100*cpu_time_used) / read_samples);
+    printf("Execution time per 100 features: %f seconds\n", (100 * cpu_time_used) / read_samples);
     printf("Accuracy %f\n", 1.0 * correct / read_samples);
 
 }
 
-int main() {
+void load_features(const char* filename, int max_test_samples, struct feature* features,
+                uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE], int* features_length, int* read_samples) {
 
-    int read_samples, i, correct;
-    uint32_t status;
-    uint32_t features_length;
-
-    
-    int fd;
-    void *map_base;
-
-    tree_data tree_data[N_TREES][N_NODE_AND_LEAFS] = {0};
-    struct feature features[MAX_TEST_SAMPLES] = {0};
-    uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE] = {0};
-    int32_t inference[MAX_TEST_SAMPLES] = {0};
-
-    int fd_h2c = open("/dev/xdma0_h2c_0", O_RDWR);
-    if (fd_h2c == -1) {
-        perror("open /dev/xdma0_h2c_0");
-        return EXIT_FAILURE;
-    }    
-    int fd_c2h = open("/dev/xdma0_c2h_0", O_RDWR);
-    if (fd_c2h == -1) {
-        perror("open /dev/xdma0_c2h_0");
-        return EXIT_FAILURE;
-    }
-
-    char *resource_path = "/sys/bus/pci/devices/0000:01:00.0/resource0";
-    
-    if ((fd = open(resource_path, O_RDWR | O_SYNC)) == -1) {
-        perror("Error abriendo el dispositivo PCIe");
-        exit(1);
-    }
-
-    map_base = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (map_base == (void *) -1) {
-        perror("Error en mmap");
-        close(fd);
-        exit(1);
-    }
-
-    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features, &features_length);
-    coppy_features_to_matrix(features, raw_features, read_samples);
-    load_model(tree_data, "../trained_models/diabetes.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, map_base, features, raw_features, inference, read_samples);
-
-    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features, &features_length);
-    coppy_features_to_matrix(features, raw_features, read_samples);
-    load_model(tree_data, "../trained_models/heart_attack.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, map_base, features, raw_features, inference, read_samples);
-
-    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
-    coppy_features_to_matrix(features, raw_features, read_samples);
-    load_model(tree_data, "../trained_models/lung_cancer.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, map_base, features, raw_features, inference, read_samples);
-
-    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
-    coppy_features_to_matrix(features, raw_features, read_samples);
-    load_model(tree_data, "../trained_models/anemia.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, map_base, features, raw_features, inference, read_samples);
-
-    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
-    coppy_features_to_matrix(features, raw_features, read_samples);
-    load_model(tree_data, "../trained_models/alzheimers.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, map_base, features, raw_features, inference, read_samples);
-
-    close(fd_h2c);
-    close(fd_c2h);
-
-    
-    return 0;
+    *read_samples = read_n_features(filename, max_test_samples, features, features_length);
+    copy_features_to_matrix(features, raw_features, *read_samples);
 }

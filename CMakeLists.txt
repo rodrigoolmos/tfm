@@ -26,6 +26,9 @@ set(LIB_SOURCES_SW
 set(LIB_SOURCES_HW
     ${DIR_HW}/common/common.c
     ${DIR_HW}/common/common.h
+    ${DIR_HW}/burst_drivers/burst.c
+    ${DIR_HW}/burst_drivers/burst.h
+
 )
 
 add_library(predict_lib STATIC ${LIB_SOURCES_SW})
@@ -38,23 +41,10 @@ add_executable(execute_model_sw ${SOURCES_SW})
 
 if(UNIX AND NOT APPLE)
 
-    set(SOURCES_HW ${DIR_HW}/dma/dma.c)
-    add_executable(execute_model_hw_dma ${SOURCES_HW})
-
-    set(SOURCES_HW ${DIR_HW}/memory_mapped/memory_mapped.c)
-    add_executable(execute_model_hw_memory_mapped ${SOURCES_HW})
-
-    set(SOURCES_HW ${DIR_HW}/MIG_2_DDR3_DMA/main.c)
-    add_executable(execute_model_MIG ${SOURCES_HW})
-
-    set(SOURCES_HW ${DIR_HW}/burst_mode/burst.c)
+    set(SOURCES_HW ${DIR_HW}/use_example.c)
     add_executable(execute_model_burst ${SOURCES_HW})
 
-    target_link_libraries(execute_model_hw_dma PRIVATE common_lib)
-    target_link_libraries(execute_model_MIG PRIVATE common_lib)
-    target_link_libraries(execute_model_hw_memory_mapped PRIVATE common_lib)
     target_link_libraries(execute_model_burst PRIVATE common_lib)
-
 
 endif()
 
