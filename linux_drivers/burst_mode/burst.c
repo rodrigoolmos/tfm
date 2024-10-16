@@ -107,14 +107,14 @@ void start_prediction(void *map_base){
 
 }
 
-void start_prediction_ping_pong(void *map_base, uint32_t ping_pong){
+void start_prediction_ping_pong(void *map_base, uint32_t ping_pong, uint32_t burst_len){
     
     if (ping_pong){
-        set_burst_len(map_base, MAX_BURST);
+        set_burst_len(map_base, burst_len);
         set_ping_pong(map_base, PING);
         start_prediction(map_base);
     }else{
-        set_burst_len(map_base, MAX_BURST);
+        set_burst_len(map_base, burst_len);
         set_ping_pong(map_base, PONG);
         start_prediction(map_base);
     }
@@ -142,13 +142,13 @@ void burst_ping_pong_process(void *map_base, int fd_h2c, int fd_c2h,
     if (n_features_total <= MAX_BURST){
 
         send_features_ping_pong(fd_h2c, raw_features[0], n_features_total, ping_pong);
-        start_prediction_ping_pong(map_base, ping_pong);
+        start_prediction_ping_pong(map_base, ping_pong, n_features_total);
         read_prediction_ping_pong(map_base, fd_c2h, inference, MAX_BURST, ping_pong);
 
     }else{
 
         send_features_ping_pong(fd_h2c, raw_features[0], MAX_BURST, ping_pong);
-        start_prediction_ping_pong(map_base, ping_pong);
+        start_prediction_ping_pong(map_base, ping_pong, MAX_BURST);
         features_index = features_index + MAX_BURST;
         features_to_precess = n_features_total > MAX_BURST ? MAX_BURST : n_features_total;
 
@@ -158,7 +158,7 @@ void burst_ping_pong_process(void *map_base, int fd_h2c, int fd_c2h,
                 send_features_ping_pong(fd_h2c, raw_features[features_index], features_to_precess, ~ping_pong);
             read_prediction_ping_pong(map_base, fd_c2h, &inference[features_index - features_to_precess], features_to_precess, ping_pong);
             if (n_features_total >= 0)
-                start_prediction_ping_pong(map_base, ~ping_pong);
+                start_prediction_ping_pong(map_base, ~ping_pong, features_to_precess);
             ping_pong = ~ping_pong;
             features_to_precess = n_features_total > MAX_BURST ? MAX_BURST : n_features_total;
             features_index = features_index + features_to_precess;
