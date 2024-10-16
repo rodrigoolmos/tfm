@@ -1,22 +1,20 @@
 # tfm
 This repository contains all the TFM documents and programs.
 
-There are different hardware implementations based on a hardware accelerator that uses “Boosting” type decision trees, trained with LightGBM and converted to hardware using Vitis HLS, followed by subsequent implementation with Vivado.
+There is hardware implementations based on a hardware accelerator that uses “Boosting” type decision trees, trained with LightGBM and converted to hardware using Vitis HLS, followed by subsequent implementation with Vivado.
 
-hardware implementations:
-
-Block design PING PONG buffers
+Block design PING PONG buffers implementation
 ![Block design1](vivado/ping_pong_burst/bd.png)
 
-Block design MIG
-![Block design1](vivado/MIG_version/bd.png)
+# Linux use example
+[Go to Linux example implementation](linux_drivers/README.md)
 
+# Building the system
+[Go to Linux example implementation](vivado/README.md)
 
-Block design XDMA
-![Block design2](vivado/dma/bd.png)
+# Training the model
+[Go to Linux example implementation](python_code/README.md)
 
-Block design MMIO
-![Block design3](vivado/memory_mapped/bd.png)
 
 There is also an implementation on a GPU with OpenCL for comparison purposes.
 

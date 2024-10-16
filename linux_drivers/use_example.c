@@ -4,9 +4,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/mman.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
 #include "./burst_drivers/burst.h"
 
 int main() {
