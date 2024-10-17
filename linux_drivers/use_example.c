@@ -8,9 +8,7 @@
 
 int main() {
 
-    int read_samples, i, correct;
-    uint32_t status;
-    uint32_t features_length;
+    uint32_t features_length, read_samples;
 
     tree_data tree_data[N_TREES][N_NODE_AND_LEAFS] = {0};
     struct feature features[MAX_TEST_SAMPLES] = {0};
