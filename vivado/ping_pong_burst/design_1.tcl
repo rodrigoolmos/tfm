@@ -37,20 +37,14 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 # To test this script, run the following commands from Vivado Tcl console:
 # source design_1_script.tcl
 
-
-# The design that will be created by this Tcl script contains the following 
-# module references:
-# running_leds
-
-# Please add the sources of those modules before sourcing this Tcl script.
-
 # If there is no project opened, this script will create a
 # project, but make sure you do not have an existing project
 # <./myproj/project_1.xpr> in the current working folder.
 
 set list_projs [get_projects -quiet]
 if { $list_projs eq "" } {
-   create_project project_1 myproj -part xc7k325tffg676-2
+   create_project project_1 myproj -part xcu250-figd2104-2L-e
+   set_property BOARD_PART xilinx.com:au250:part0:1.3 [current_project]
 }
 
 
@@ -130,12 +124,13 @@ set bCheckIPsPassed 1
 set bCheckIPs 1
 if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
+xilinx.com:ip:axi_bram_ctrl:4.1\
+xilinx.com:ip:smartconnect:1.0\
+xilinx.com:ip:blk_mem_gen:8.4\
+xilinx.com:ip:ila:6.2\
+rodrigo:predict:predict:1.0\
 xilinx.com:ip:xdma:4.1\
 xilinx.com:ip:util_ds_buf:2.2\
-xilinx.com:ip:ila:6.2\
-xilinx.com:ip:blk_mem_gen:8.4\
-xilinx.com:ip:axi_bram_ctrl:4.1\
-rodrigo:na:predict:1.0\
 "
 
    set list_ips_missing ""
@@ -153,31 +148,6 @@ rodrigo:na:predict:1.0\
       set bCheckIPsPassed 0
    }
 
-}
-
-##################################################################
-# CHECK Modules
-##################################################################
-set bCheckModules 1
-if { $bCheckModules == 1 } {
-   set list_check_mods "\ 
-running_leds\
-"
-
-   set list_mods_missing ""
-   common::send_gid_msg -ssname BD::TCL -id 2020 -severity "INFO" "Checking if the following modules exist in the project's sources: $list_check_mods ."
-
-   foreach mod_vlnv $list_check_mods {
-      if { [can_resolve_reference $mod_vlnv] == 0 } {
-         lappend list_mods_missing $mod_vlnv
-      }
-   }
-
-   if { $list_mods_missing ne "" } {
-      catch {common::send_gid_msg -ssname BD::TCL -id 2021 -severity "ERROR" "The following module(s) are not found in the project: $list_mods_missing" }
-      common::send_gid_msg -ssname BD::TCL -id 2022 -severity "INFO" "Please add source files for the missing module(s) above."
-      set bCheckIPsPassed 0
-   }
 }
 
 if { $bCheckIPsPassed != 1 } {
@@ -224,90 +194,19 @@ proc create_root_design { parentCell } {
 
 
   # Create interface ports
-  set pcie_clkin [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 pcie_clkin ]
+  set pci_express_x4 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:pcie_7x_mgt_rtl:1.0 pci_express_x4 ]
 
-  set pcie_mgt [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:pcie_7x_mgt_rtl:1.0 pcie_mgt ]
+  set pcie_refclk [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 pcie_refclk ]
+  set_property -dict [ list \
+   CONFIG.FREQ_HZ {100000000} \
+   ] $pcie_refclk
 
 
   # Create ports
-  set pcie_reset [ create_bd_port -dir I -type rst pcie_reset ]
-  set dataout [ create_bd_port -dir O -from 7 -to 0 dataout ]
-
-  # Create instance: xdma_0, and set properties
-  set xdma_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xdma:4.1 xdma_0 ]
-  set_property -dict [list \
-    CONFIG.axi_data_width {64_bit} \
-    CONFIG.axilite_master_en {true} \
-    CONFIG.axilite_master_scale {Kilobytes} \
-    CONFIG.axilite_master_size {512} \
-    CONFIG.axisten_freq {125} \
-    CONFIG.cfg_mgmt_if {false} \
-    CONFIG.pcie_extended_tag {false} \
-    CONFIG.pf0_msi_enabled {false} \
-    CONFIG.pl_link_cap_max_link_speed {2.5_GT/s} \
-    CONFIG.pl_link_cap_max_link_width {X4} \
-    CONFIG.xdma_rnum_rids {32} \
-    CONFIG.xdma_wnum_rids {16} \
-  ] $xdma_0
-
-
-  # Create instance: util_ds_buf_0, and set properties
-  set util_ds_buf_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 util_ds_buf_0 ]
-  set_property CONFIG.C_BUF_TYPE {IBUFDSGTE} $util_ds_buf_0
-
-
-  # Create instance: xdma_0_axi_periph, and set properties
-  set xdma_0_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 xdma_0_axi_periph ]
-  set_property -dict [list \
-    CONFIG.NUM_MI {1} \
-    CONFIG.STRATEGY {0} \
-  ] $xdma_0_axi_periph
-
-
-  # Create instance: xdma_0_axi_periph_1, and set properties
-  set xdma_0_axi_periph_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 xdma_0_axi_periph_1 ]
-  set_property -dict [list \
-    CONFIG.NUM_MI {5} \
-    CONFIG.STRATEGY {1} \
-  ] $xdma_0_axi_periph_1
-
-
-  # Create instance: ila_tite, and set properties
-  set ila_tite [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_tite ]
-
-  # Create instance: running_leds_0, and set properties
-  set block_name running_leds
-  set block_cell_name running_leds_0
-  if { [catch {set running_leds_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $running_leds_0 eq "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
-  # Create instance: ila_tree, and set properties
-  set ila_tree [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_tree ]
-
-  # Create instance: predict_0_bram, and set properties
-  set predict_0_bram [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 predict_0_bram ]
-  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $predict_0_bram
-
-
-  # Create instance: predict_0_bram_0, and set properties
-  set predict_0_bram_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 predict_0_bram_0 ]
-  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $predict_0_bram_0
-
-
-  # Create instance: predict_0_bram1, and set properties
-  set predict_0_bram1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 predict_0_bram1 ]
-  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $predict_0_bram1
-
-
-  # Create instance: predict_0_bram2, and set properties
-  set predict_0_bram2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 predict_0_bram2 ]
-  set_property CONFIG.Memory_Type {True_Dual_Port_RAM} $predict_0_bram2
-
+  set pcie_perstn [ create_bd_port -dir I -type rst pcie_perstn ]
+  set_property -dict [ list \
+   CONFIG.POLARITY {ACTIVE_LOW} \
+ ] $pcie_perstn
 
   # Create instance: axi_bram_features_ping, and set properties
   set axi_bram_features_ping [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_features_ping ]
@@ -329,66 +228,160 @@ proc create_root_design { parentCell } {
   set_property CONFIG.SINGLE_PORT_BRAM {1} $axi_bram_prediction_pong
 
 
-  # Create instance: ila_tree1, and set properties
-  set ila_tree1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_tree1 ]
+  # Create instance: axi_smc, and set properties
+  set axi_smc [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc ]
+  set_property -dict [list \
+    CONFIG.NUM_MI {5} \
+    CONFIG.NUM_SI {1} \
+  ] $axi_smc
 
-  # Create instance: ila_tree2, and set properties
-  set ila_tree2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_tree2 ]
 
-  # Create instance: ila_tree3, and set properties
-  set ila_tree3 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_tree3 ]
+  # Create instance: predict_0_bram1, and set properties
+  set predict_0_bram1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 predict_0_bram1 ]
+  set_property -dict [list \
+    CONFIG.Enable_B {Use_ENB_Pin} \
+    CONFIG.Memory_Type {True_Dual_Port_RAM} \
+    CONFIG.Port_B_Clock {100} \
+    CONFIG.Port_B_Enable_Rate {100} \
+    CONFIG.Port_B_Write_Rate {50} \
+    CONFIG.Use_RSTB_Pin {true} \
+  ] $predict_0_bram1
 
-  # Create instance: ila_tree4, and set properties
-  set ila_tree4 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_tree4 ]
+
+  # Create instance: predict_0_bram2, and set properties
+  set predict_0_bram2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 predict_0_bram2 ]
+  set_property -dict [list \
+    CONFIG.Enable_B {Use_ENB_Pin} \
+    CONFIG.Memory_Type {True_Dual_Port_RAM} \
+    CONFIG.Port_B_Clock {100} \
+    CONFIG.Port_B_Enable_Rate {100} \
+    CONFIG.Port_B_Write_Rate {50} \
+    CONFIG.Use_RSTB_Pin {true} \
+  ] $predict_0_bram2
+
+
+  # Create instance: predict_0_bram_0, and set properties
+  set predict_0_bram_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 predict_0_bram_0 ]
+  set_property -dict [list \
+    CONFIG.Enable_B {Use_ENB_Pin} \
+    CONFIG.Memory_Type {True_Dual_Port_RAM} \
+    CONFIG.Port_B_Clock {100} \
+    CONFIG.Port_B_Enable_Rate {100} \
+    CONFIG.Port_B_Write_Rate {50} \
+    CONFIG.Use_RSTB_Pin {true} \
+  ] $predict_0_bram_0
+
+
+  # Create instance: predict_0_bram, and set properties
+  set predict_0_bram [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 predict_0_bram ]
+  set_property -dict [list \
+    CONFIG.Enable_B {Use_ENB_Pin} \
+    CONFIG.Memory_Type {True_Dual_Port_RAM} \
+    CONFIG.Port_B_Clock {100} \
+    CONFIG.Port_B_Enable_Rate {100} \
+    CONFIG.Port_B_Write_Rate {50} \
+    CONFIG.Use_RSTB_Pin {true} \
+  ] $predict_0_bram
+
+
+  # Create instance: xdma_0_axi_periph, and set properties
+  set xdma_0_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 xdma_0_axi_periph ]
+  set_property CONFIG.NUM_MI {1} $xdma_0_axi_periph
+
+
+  # Create instance: ila_0, and set properties
+  set ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_0 ]
+
+  # Create instance: ila_1, and set properties
+  set ila_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_1 ]
+
+  # Create instance: ila_2, and set properties
+  set ila_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_2 ]
+
+  # Create instance: ila_3, and set properties
+  set ila_3 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_3 ]
+
+  # Create instance: ila_4, and set properties
+  set ila_4 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_4 ]
+
+  # Create instance: ila_5, and set properties
+  set ila_5 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_5 ]
 
   # Create instance: predict_0, and set properties
-  set predict_0 [ create_bd_cell -type ip -vlnv rodrigo:na:predict:1.0 predict_0 ]
+  set predict_0 [ create_bd_cell -type ip -vlnv rodrigo:predict:predict:1.0 predict_0 ]
+
+  # Create instance: xdma_0, and set properties
+  set xdma_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xdma:4.1 xdma_0 ]
+  set_property -dict [list \
+    CONFIG.PCIE_BOARD_INTERFACE {pci_express_x4} \
+    CONFIG.SYS_RST_N_BOARD_INTERFACE {pcie_perstn} \
+    CONFIG.axi_data_width {64_bit} \
+    CONFIG.axilite_master_en {true} \
+    CONFIG.axilite_master_size {32} \
+    CONFIG.axisten_freq {125} \
+    CONFIG.pcie_extended_tag {false} \
+    CONFIG.pf0_device_id {8011} \
+    CONFIG.pf0_link_status_slot_clock_config {false} \
+    CONFIG.pf0_msi_enabled {false} \
+    CONFIG.pl_link_cap_max_link_speed {2.5_GT/s} \
+    CONFIG.xdma_axi_intf_mm {AXI_Memory_Mapped} \
+  ] $xdma_0
+
+
+  # Create instance: util_ds_buf, and set properties
+  set util_ds_buf [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 util_ds_buf ]
+  set_property -dict [list \
+    CONFIG.DIFF_CLK_IN_BOARD_INTERFACE {pcie_refclk} \
+    CONFIG.USE_BOARD_FLOW {true} \
+  ] $util_ds_buf
+
 
   # Create interface connections
   connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_pins axi_bram_features_ping/BRAM_PORTA] [get_bd_intf_pins predict_0_bram/BRAM_PORTB]
   connect_bd_intf_net -intf_net axi_bram_ctrl_1_BRAM_PORTA [get_bd_intf_pins axi_bram_features_pong/BRAM_PORTA] [get_bd_intf_pins predict_0_bram1/BRAM_PORTB]
   connect_bd_intf_net -intf_net axi_bram_ctrl_2_BRAM_PORTA [get_bd_intf_pins axi_bram_prediction_ping/BRAM_PORTA] [get_bd_intf_pins predict_0_bram_0/BRAM_PORTB]
   connect_bd_intf_net -intf_net axi_bram_ctrl_3_BRAM_PORTA [get_bd_intf_pins axi_bram_prediction_pong/BRAM_PORTA] [get_bd_intf_pins predict_0_bram2/BRAM_PORTB]
-  connect_bd_intf_net -intf_net pcie_clkin_1 [get_bd_intf_pins util_ds_buf_0/CLK_IN_D] [get_bd_intf_ports pcie_clkin]
-  connect_bd_intf_net -intf_net predict_0_bram_features_ping_PORTA [get_bd_intf_pins predict_0_bram/BRAM_PORTA] [get_bd_intf_pins predict_0/bram_features_ping_PORTA]
-  connect_bd_intf_net -intf_net predict_0_bram_features_pong_PORTA [get_bd_intf_pins predict_0_bram1/BRAM_PORTA] [get_bd_intf_pins predict_0/bram_features_pong_PORTA]
-  connect_bd_intf_net -intf_net predict_0_prediction_ping_PORTA [get_bd_intf_pins predict_0_bram_0/BRAM_PORTA] [get_bd_intf_pins predict_0/prediction_ping_PORTA]
-  connect_bd_intf_net -intf_net predict_0_prediction_pong_PORTA [get_bd_intf_pins predict_0_bram2/BRAM_PORTA] [get_bd_intf_pins predict_0/prediction_pong_PORTA]
-  connect_bd_intf_net -intf_net xdma_0_M_AXI [get_bd_intf_pins xdma_0/M_AXI] [get_bd_intf_pins xdma_0_axi_periph_1/S00_AXI]
+  connect_bd_intf_net -intf_net axi_smc_M00_AXI [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins axi_bram_features_ping/S_AXI]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axi_smc_M00_AXI] [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins ila_0/SLOT_0_AXI]
+  connect_bd_intf_net -intf_net axi_smc_M01_AXI [get_bd_intf_pins axi_smc/M01_AXI] [get_bd_intf_pins axi_bram_features_pong/S_AXI]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axi_smc_M01_AXI] [get_bd_intf_pins axi_smc/M01_AXI] [get_bd_intf_pins ila_1/SLOT_0_AXI]
+  connect_bd_intf_net -intf_net axi_smc_M02_AXI [get_bd_intf_pins axi_smc/M02_AXI] [get_bd_intf_pins axi_bram_prediction_ping/S_AXI]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axi_smc_M02_AXI] [get_bd_intf_pins axi_smc/M02_AXI] [get_bd_intf_pins ila_2/SLOT_0_AXI]
+  connect_bd_intf_net -intf_net axi_smc_M03_AXI [get_bd_intf_pins axi_smc/M03_AXI] [get_bd_intf_pins axi_bram_prediction_pong/S_AXI]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axi_smc_M03_AXI] [get_bd_intf_pins axi_smc/M03_AXI] [get_bd_intf_pins ila_3/SLOT_0_AXI]
+  connect_bd_intf_net -intf_net axi_smc_M04_AXI [get_bd_intf_pins axi_smc/M04_AXI] [get_bd_intf_pins predict_0/s_axi_tree]
+connect_bd_intf_net -intf_net [get_bd_intf_nets axi_smc_M04_AXI] [get_bd_intf_pins axi_smc/M04_AXI] [get_bd_intf_pins ila_4/SLOT_0_AXI]
+  connect_bd_intf_net -intf_net pcie_refclk_1 [get_bd_intf_ports pcie_refclk] [get_bd_intf_pins util_ds_buf/CLK_IN_D]
+  connect_bd_intf_net -intf_net predict_0_bram_features_ping_PORTA [get_bd_intf_pins predict_0/bram_features_ping_PORTA] [get_bd_intf_pins predict_0_bram/BRAM_PORTA]
+  connect_bd_intf_net -intf_net predict_0_bram_features_pong_PORTA [get_bd_intf_pins predict_0/bram_features_pong_PORTA] [get_bd_intf_pins predict_0_bram1/BRAM_PORTA]
+  connect_bd_intf_net -intf_net predict_0_prediction_ping_PORTA [get_bd_intf_pins predict_0/prediction_ping_PORTA] [get_bd_intf_pins predict_0_bram_0/BRAM_PORTA]
+  connect_bd_intf_net -intf_net predict_0_prediction_pong_PORTA [get_bd_intf_pins predict_0/prediction_pong_PORTA] [get_bd_intf_pins predict_0_bram2/BRAM_PORTA]
+  connect_bd_intf_net -intf_net xdma_0_M_AXI [get_bd_intf_pins xdma_0/M_AXI] [get_bd_intf_pins axi_smc/S00_AXI]
   connect_bd_intf_net -intf_net xdma_0_M_AXI_LITE [get_bd_intf_pins xdma_0/M_AXI_LITE] [get_bd_intf_pins xdma_0_axi_periph/S00_AXI]
-connect_bd_intf_net -intf_net [get_bd_intf_nets xdma_0_M_AXI_LITE] [get_bd_intf_pins xdma_0/M_AXI_LITE] [get_bd_intf_pins ila_tite/SLOT_0_AXI]
-  connect_bd_intf_net -intf_net xdma_0_axi_periph_1_M00_AXI [get_bd_intf_pins xdma_0_axi_periph_1/M00_AXI] [get_bd_intf_pins axi_bram_features_ping/S_AXI]
-connect_bd_intf_net -intf_net [get_bd_intf_nets xdma_0_axi_periph_1_M00_AXI] [get_bd_intf_pins xdma_0_axi_periph_1/M00_AXI] [get_bd_intf_pins ila_tree4/SLOT_0_AXI]
-  connect_bd_intf_net -intf_net xdma_0_axi_periph_1_M01_AXI [get_bd_intf_pins xdma_0_axi_periph_1/M01_AXI] [get_bd_intf_pins predict_0/s_axi_tree]
-connect_bd_intf_net -intf_net [get_bd_intf_nets xdma_0_axi_periph_1_M01_AXI] [get_bd_intf_pins xdma_0_axi_periph_1/M01_AXI] [get_bd_intf_pins ila_tree/SLOT_0_AXI]
-  connect_bd_intf_net -intf_net xdma_0_axi_periph_1_M02_AXI [get_bd_intf_pins xdma_0_axi_periph_1/M02_AXI] [get_bd_intf_pins axi_bram_features_pong/S_AXI]
-connect_bd_intf_net -intf_net [get_bd_intf_nets xdma_0_axi_periph_1_M02_AXI] [get_bd_intf_pins xdma_0_axi_periph_1/M02_AXI] [get_bd_intf_pins ila_tree3/SLOT_0_AXI]
-  connect_bd_intf_net -intf_net xdma_0_axi_periph_1_M03_AXI [get_bd_intf_pins xdma_0_axi_periph_1/M03_AXI] [get_bd_intf_pins axi_bram_prediction_ping/S_AXI]
-connect_bd_intf_net -intf_net [get_bd_intf_nets xdma_0_axi_periph_1_M03_AXI] [get_bd_intf_pins xdma_0_axi_periph_1/M03_AXI] [get_bd_intf_pins ila_tree1/SLOT_0_AXI]
-  connect_bd_intf_net -intf_net xdma_0_axi_periph_1_M04_AXI [get_bd_intf_pins xdma_0_axi_periph_1/M04_AXI] [get_bd_intf_pins axi_bram_prediction_pong/S_AXI]
-connect_bd_intf_net -intf_net [get_bd_intf_nets xdma_0_axi_periph_1_M04_AXI] [get_bd_intf_pins xdma_0_axi_periph_1/M04_AXI] [get_bd_intf_pins ila_tree2/SLOT_0_AXI]
   connect_bd_intf_net -intf_net xdma_0_axi_periph_M00_AXI [get_bd_intf_pins xdma_0_axi_periph/M00_AXI] [get_bd_intf_pins predict_0/s_axi_control]
-  connect_bd_intf_net -intf_net xdma_0_pcie_mgt [get_bd_intf_ports pcie_mgt] [get_bd_intf_pins xdma_0/pcie_mgt]
+connect_bd_intf_net -intf_net [get_bd_intf_nets xdma_0_axi_periph_M00_AXI] [get_bd_intf_pins xdma_0_axi_periph/M00_AXI] [get_bd_intf_pins ila_5/SLOT_0_AXI]
+  connect_bd_intf_net -intf_net xdma_0_pcie_mgt [get_bd_intf_ports pci_express_x4] [get_bd_intf_pins xdma_0/pcie_mgt]
 
   # Create port connections
-  connect_bd_net -net pcie_reset_1 [get_bd_ports pcie_reset] [get_bd_pins xdma_0/sys_rst_n]
-  connect_bd_net -net running_leds_0_dataout [get_bd_pins running_leds_0/dataout] [get_bd_ports dataout]
-  connect_bd_net -net util_ds_buf_0_IBUF_OUT [get_bd_pins util_ds_buf_0/IBUF_OUT] [get_bd_pins xdma_0/sys_clk]
-  connect_bd_net -net xdma_0_axi_aclk [get_bd_pins xdma_0/axi_aclk] [get_bd_pins xdma_0_axi_periph/ACLK] [get_bd_pins xdma_0_axi_periph/S00_ACLK] [get_bd_pins xdma_0_axi_periph/M00_ACLK] [get_bd_pins xdma_0_axi_periph_1/ACLK] [get_bd_pins xdma_0_axi_periph_1/S00_ACLK] [get_bd_pins xdma_0_axi_periph_1/M00_ACLK] [get_bd_pins xdma_0_axi_periph_1/M01_ACLK] [get_bd_pins ila_tite/clk] [get_bd_pins running_leds_0/CLK] [get_bd_pins ila_tree/clk] [get_bd_pins axi_bram_features_ping/s_axi_aclk] [get_bd_pins axi_bram_features_pong/s_axi_aclk] [get_bd_pins xdma_0_axi_periph_1/M02_ACLK] [get_bd_pins axi_bram_prediction_ping/s_axi_aclk] [get_bd_pins xdma_0_axi_periph_1/M03_ACLK] [get_bd_pins axi_bram_prediction_pong/s_axi_aclk] [get_bd_pins xdma_0_axi_periph_1/M04_ACLK] [get_bd_pins ila_tree1/clk] [get_bd_pins ila_tree2/clk] [get_bd_pins ila_tree3/clk] [get_bd_pins ila_tree4/clk] [get_bd_pins predict_0/ap_clk]
-  connect_bd_net -net xdma_0_axi_aresetn [get_bd_pins xdma_0/axi_aresetn] [get_bd_pins xdma_0_axi_periph/S00_ARESETN] [get_bd_pins xdma_0_axi_periph/M00_ARESETN] [get_bd_pins xdma_0_axi_periph/ARESETN] [get_bd_pins xdma_0_axi_periph_1/S00_ARESETN] [get_bd_pins xdma_0_axi_periph_1/M00_ARESETN] [get_bd_pins xdma_0_axi_periph_1/ARESETN] [get_bd_pins xdma_0_axi_periph_1/M01_ARESETN] [get_bd_pins running_leds_0/nrst] [get_bd_pins axi_bram_features_ping/s_axi_aresetn] [get_bd_pins axi_bram_features_pong/s_axi_aresetn] [get_bd_pins xdma_0_axi_periph_1/M02_ARESETN] [get_bd_pins axi_bram_prediction_ping/s_axi_aresetn] [get_bd_pins xdma_0_axi_periph_1/M03_ARESETN] [get_bd_pins axi_bram_prediction_pong/s_axi_aresetn] [get_bd_pins xdma_0_axi_periph_1/M04_ARESETN] [get_bd_pins predict_0/ap_rst_n]
+  connect_bd_net -net pcie_perstn_1 [get_bd_ports pcie_perstn] [get_bd_pins xdma_0/sys_rst_n]
+  connect_bd_net -net util_ds_buf_IBUF_DS_ODIV2 [get_bd_pins util_ds_buf/IBUF_DS_ODIV2] [get_bd_pins xdma_0/sys_clk]
+  connect_bd_net -net util_ds_buf_IBUF_OUT [get_bd_pins util_ds_buf/IBUF_OUT] [get_bd_pins xdma_0/sys_clk_gt]
+  connect_bd_net -net xdma_0_axi_aclk [get_bd_pins xdma_0/axi_aclk] [get_bd_pins axi_bram_features_ping/s_axi_aclk] [get_bd_pins axi_bram_features_pong/s_axi_aclk] [get_bd_pins axi_bram_prediction_ping/s_axi_aclk] [get_bd_pins axi_bram_prediction_pong/s_axi_aclk] [get_bd_pins axi_smc/aclk] [get_bd_pins xdma_0_axi_periph/ACLK] [get_bd_pins xdma_0_axi_periph/S00_ACLK] [get_bd_pins xdma_0_axi_periph/M00_ACLK] [get_bd_pins ila_0/clk] [get_bd_pins ila_1/clk] [get_bd_pins ila_2/clk] [get_bd_pins ila_3/clk] [get_bd_pins ila_4/clk] [get_bd_pins ila_5/clk] [get_bd_pins predict_0/ap_clk]
+  connect_bd_net -net xdma_0_axi_aresetn [get_bd_pins xdma_0/axi_aresetn] [get_bd_pins axi_bram_features_ping/s_axi_aresetn] [get_bd_pins axi_bram_features_pong/s_axi_aresetn] [get_bd_pins axi_bram_prediction_ping/s_axi_aresetn] [get_bd_pins axi_bram_prediction_pong/s_axi_aresetn] [get_bd_pins axi_smc/aresetn] [get_bd_pins xdma_0_axi_periph/ARESETN] [get_bd_pins xdma_0_axi_periph/S00_ARESETN] [get_bd_pins xdma_0_axi_periph/M00_ARESETN] [get_bd_pins predict_0/ap_rst_n]
 
   # Create address segments
-  assign_bd_address -offset 0xC0000000 -range 0x00008000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs axi_bram_features_ping/S_AXI/Mem0] -force
-  assign_bd_address -offset 0xC2000000 -range 0x00008000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs axi_bram_features_pong/S_AXI/Mem0] -force
-  assign_bd_address -offset 0xC4000000 -range 0x00001000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs axi_bram_prediction_ping/S_AXI/Mem0] -force
-  assign_bd_address -offset 0xC6000000 -range 0x00001000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs axi_bram_prediction_pong/S_AXI/Mem0] -force
-  assign_bd_address -offset 0x00000000 -range 0x00200000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs predict_0/s_axi_tree/Reg] -force
-  assign_bd_address -offset 0x00000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs predict_0/s_axi_control/Reg] -force
+  assign_bd_address -offset 0xC0000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs axi_bram_features_ping/S_AXI/Mem0] -force
+  assign_bd_address -offset 0xC2000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs axi_bram_features_pong/S_AXI/Mem0] -force
+  assign_bd_address -offset 0xC4000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs axi_bram_prediction_ping/S_AXI/Mem0] -force
+  assign_bd_address -offset 0xC6000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs axi_bram_prediction_pong/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x00000000 -range 0x00800000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs predict_0/s_axi_tree/Reg] -force
+  assign_bd_address -offset 0x00000000 -range 0x00000200 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs predict_0/s_axi_control/Reg] -force
 
 
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -400,6 +393,4 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets xdma_0_axi_periph_1_M04_AXI] [ge
 
 create_root_design ""
 
-
-common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
