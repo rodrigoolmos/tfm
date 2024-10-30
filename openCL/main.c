@@ -5,9 +5,12 @@
 #include <stdint.h>
 #include "../linux_drivers/common/common.h"
 
-#define N_TREES 128
+#define N_TREES 512
 #define N_NODE_AND_LEAFS 256
 #define N_FEATURE 32
+
+#define N_ITE 400
+
 
 const char* kernelSource = 
 "__kernel void predict_kernel(__global const ulong *tree,"
@@ -200,7 +203,7 @@ uint32_t release_gpu_predict (){
 	return err;
 }
 
-void evaluate_model(uint32_t read_samples, struct feature* features, uint64_t *tree_vector) {
+void evaluate_model(uint32_t read_samples, struct feature* features, uint64_t *tree_vector, float* time_used) {
 
     int accuracy = 0;
     int32_t prediction;
@@ -218,16 +221,23 @@ void evaluate_model(uint32_t read_samples, struct feature* features, uint64_t *t
     printf("Accuracy %f\n", 1.0 * accuracy / read_samples);
     end_time = clock();
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-    printf("Tiempo de ejecucion por feature: %f segundos\n", cpu_time_used / read_samples);
+    *time_used = cpu_time_used / read_samples;
+    printf("Tiempo de ejecucion por feature: %f segundos\n", *time_used);
 }
 
 
 
 int main() {
     
+    float time_used = 0;
+    float time_model_1 = 0;
+    float time_model_2 = 0;
+    float time_model_3 = 0;
+    float time_model_4 = 0;
+    float time_model_5 = 0;
 
     int read_samples;
-    int prediction;
+    int prediction, i;
     uint32_t features_length;
 
     gpu_predict.size_features = N_FEATURE;
@@ -239,47 +249,47 @@ int main() {
 
     init_gpu_predict();
 
+    for (i = 0; i < N_ITE; i++){
+    
+        read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features, &features_length);
+        load_model(tree, "../trained_models/diabetes.model");
+        convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
+        evaluate_model(read_samples, features, tree_vector, &time_used);    
+        time_model_1 += time_used;
 
-    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features, &features_length);
-    load_model(tree, "../trained_models/diabetes.model");
+        read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features, &features_length);
+        load_model(tree, "../trained_models/heart_attack.model");
+        convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
+        evaluate_model(read_samples, features, tree_vector, &time_used);    
+        time_model_2 += time_used;
 
-    convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
+        read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
+        load_model(tree, "../trained_models/lung_cancer.model");
+        convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
+        evaluate_model(read_samples, features, tree_vector, &time_used);    
+        time_model_3 += time_used;
 
-    evaluate_model(read_samples, features, tree_vector);    
+        read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
+        load_model(tree, "../trained_models/anemia.model");
+        convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
+        evaluate_model(read_samples, features, tree_vector, &time_used);    
+        time_model_4 += time_used;
 
+        read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
+        load_model(tree, "../trained_models/alzheimers.model");
+        convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
+        evaluate_model(read_samples, features, tree_vector, &time_used);    
+        time_model_5 += time_used;
 
-    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features, &features_length);
-    load_model(tree, "../trained_models/heart_attack.model");
-
-    convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
-
-    evaluate_model(read_samples, features, tree_vector);    
-
-
-    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
-    load_model(tree, "../trained_models/lung_cancer.model");
-
-    convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
-
-    evaluate_model(read_samples, features, tree_vector);    
-
-
-    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
-    load_model(tree, "../trained_models/anemia.model");
-
-    convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
-
-    evaluate_model(read_samples, features, tree_vector);    
-
-
-    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
-    load_model(tree, "../trained_models/alzheimers.model");
-
-    convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
-
-    evaluate_model(read_samples, features, tree_vector);    
+        }
 
     release_gpu_predict();
+
+    printf("AVERAGE TIME GPU MODEL 1 %f\n", time_model_1 / N_ITE);
+    printf("AVERAGE TIME GPU MODEL 2 %f\n", time_model_2 / N_ITE);
+    printf("AVERAGE TIME GPU MODEL 3 %f\n", time_model_3 / N_ITE);
+    printf("AVERAGE TIME GPU MODEL 4 %f\n", time_model_4 / N_ITE);
+    printf("AVERAGE TIME GPU MODEL 5 %f\n", time_model_5 / N_ITE);
 
     return 0;
 }
