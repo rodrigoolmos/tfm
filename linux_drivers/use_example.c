@@ -6,7 +6,7 @@
 #include <sys/mman.h>
 #include "./burst_drivers/burst.h"
 
-#define N_ITE 1000
+#define N_ITE 200
 
 int main() {
 
@@ -74,11 +74,11 @@ int main() {
     
     }
 
-    printf("AVERAGE TIME EXECUTION MODEL 1 %f\n", time_ex1 / N_ITE);
-    printf("AVERAGE TIME EXECUTION MODEL 2 %f\n", time_ex2 / N_ITE);
-    printf("AVERAGE TIME EXECUTION MODEL 3 %f\n", time_ex3 / N_ITE);
-    printf("AVERAGE TIME EXECUTION MODEL 4 %f\n", time_ex4 / N_ITE);
-    printf("AVERAGE TIME EXECUTION MODEL 5 %f\n", time_ex5 / N_ITE);
+    printf("AVERAGE TIME FPGA MODEL 1 %f\n", time_ex1 / N_ITE);
+    printf("AVERAGE TIME FPGA MODEL 2 %f\n", time_ex2 / N_ITE);
+    printf("AVERAGE TIME FPGA MODEL 3 %f\n", time_ex3 / N_ITE);
+    printf("AVERAGE TIME FPGA MODEL 4 %f\n", time_ex4 / N_ITE);
+    printf("AVERAGE TIME FPGA MODEL 5 %f\n", time_ex5 / N_ITE);
 
 
     close(fd_h2c);
