@@ -252,31 +252,31 @@ int main() {
     for (i = 0; i < N_ITE; i++){
     
         read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features, &features_length);
-        load_model(tree, "../trained_models/diabetes.model");
+        load_model(tree, "../trained_models/diabetes_512.model");
         convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
         evaluate_model(read_samples, features, tree_vector, &time_used);    
         time_model_1 += time_used;
 
         read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features, &features_length);
-        load_model(tree, "../trained_models/heart_attack.model");
+        load_model(tree, "../trained_models/heart_attack_512.model");
         convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
         evaluate_model(read_samples, features, tree_vector, &time_used);    
         time_model_2 += time_used;
 
         read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
-        load_model(tree, "../trained_models/lung_cancer.model");
+        load_model(tree, "../trained_models/lung_cancer_512.model");
         convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
         evaluate_model(read_samples, features, tree_vector, &time_used);    
         time_model_3 += time_used;
 
         read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
-        load_model(tree, "../trained_models/anemia.model");
+        load_model(tree, "../trained_models/anemia_512.model");
         convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
         evaluate_model(read_samples, features, tree_vector, &time_used);    
         time_model_4 += time_used;
 
         read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features, &features_length);
-        load_model(tree, "../trained_models/alzheimers.model");
+        load_model(tree, "../trained_models/alzheimers_512.model");
         convert_tree_to_vector(tree, N_TREES, N_NODE_AND_LEAFS, tree_vector);
         evaluate_model(read_samples, features, tree_vector, &time_used);    
         time_model_5 += time_used;

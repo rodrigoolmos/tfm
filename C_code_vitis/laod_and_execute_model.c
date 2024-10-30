@@ -123,23 +123,23 @@ int main() {
     for (i = 0; i < N_ITE; i++){
         printf("Executing SW\n");
         read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
-        load_model(tree_data, "../trained_models/diabetes_1024.model");
+        load_model(tree_data, "../trained_models/diabetes_512.model");
         evaluate_model(tree_data, features, read_samples, &time_used);
         time_model_1 += time_used;
         read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
-        load_model(tree_data, "../trained_models/heart_attack_1024.model");
+        load_model(tree_data, "../trained_models/heart_attack_512.model");
         evaluate_model(tree_data, features, read_samples, &time_used);
         time_model_2 += time_used;
         read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-        load_model(tree_data, "../trained_models/lung_cancer_1024.model"); 
+        load_model(tree_data, "../trained_models/lung_cancer_512.model"); 
         evaluate_model(tree_data, features, read_samples, &time_used);
         time_model_3 += time_used;
         read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-        load_model(tree_data, "../trained_models/anemia_1024.model");
+        load_model(tree_data, "../trained_models/anemia_512.model");
         evaluate_model(tree_data, features, read_samples, &time_used);
         time_model_4 += time_used;
         read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-        load_model(tree_data, "../trained_models/alzheimers_1024.model");
+        load_model(tree_data, "../trained_models/alzheimers_512.model");
         evaluate_model(tree_data, features, read_samples, &time_used);
         time_model_5 += time_used;
     }
