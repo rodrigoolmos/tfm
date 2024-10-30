@@ -33,7 +33,7 @@
  */
 void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS],
                     int fd_user, struct feature features[MAX_TEST_SAMPLES], uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE],
-                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples);
+                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples, float* time_execution);
                     
 /**
  * @brief Loads a CSV file into the features structure and the matrix of raw features.
