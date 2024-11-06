@@ -1,3 +1,4 @@
+import argparse
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -7,8 +8,6 @@ import matplotlib.pyplot as plt
 from graphviz import Digraph
 from collections import deque
 import struct
-import argparse
-import os
 
 #######################################################
 ##                                                   ##
@@ -82,10 +81,11 @@ def parse_model(booster, n_nodes_and_leaves):
     
     return trees
 
-def train_model_parse_and_store(data, output_model_name, num_trees=200, learning_rate=0.1, n_jobs=72, test_size=0.8, max_depth = 10):
+def train_model_parse_and_store(data, output_model_name, num_trees=200, learning_rate=0.1, n_jobs=72, test_size=0.8, max_depth = 8):
     # Separate features and label
-    X = data.drop('Outcome', axis=1)
-    y = data['Outcome']
+    # The last column is assumed to be the prediction (Outcome)
+    X = data.iloc[:, :-1]
+    y = data.iloc[:, -1]
     num_leaves = int(2**(max_depth - 1))
     num_nodes_and_leaves = num_leaves * 2
     compact_data = [0] * num_nodes_and_leaves
@@ -130,48 +130,25 @@ def train_model_parse_and_store(data, output_model_name, num_trees=200, learning
         
 
 
-def preprocess_data(data):
-    data.replace({'M': 0, 'F': 1, 'M ': 0, 'F ': 1, ' M ': 0, ' F ': 1, ' M': 0, ' F': 1,
-                  'Yes': 1, 'No': 0, 'YES': 1, 'NO': 0}, inplace=True)
-    return data
+def main():
+    parser = argparse.ArgumentParser(description="Train a LightGBM model and export it as binary ready to be used in the FPGA.")
+    parser.add_argument('--data_path', type=str, required=True, help="Path to the dataset CSV file. Data must be preprocessed with only numerical values allowed, and the prediction column must be the last column.")
+    parser.add_argument('--output_model_name', type=str, required=True, help="Path to save the output model file.")
+    parser.add_argument('--num_trees', type=int, default=1024, help="Number of trees for LightGBM.")
+    parser.add_argument('--learning_rate', type=float, default=0.1, help="Learning rate for LightGBM.")
+    parser.add_argument('--n_jobs', type=int, default=72, help="Number of parallel jobs for LightGBM.")
+    parser.add_argument('--test_size', type=float, default=0.2, help="Proportion of dataset for testing.")
+    parser.add_argument('--max_depth', type=int, default=8, help="Maximum depth of the trees <= 8.")
+    
+    args = parser.parse_args()
+    
+    if args.max_depth > 8:
+        raise ValueError("The maximum depth of the trees (max_depth) cannot exceed 8.")
 
-parser = argparse.ArgumentParser(description="Trains a model and exports it in a specific format"
-                                 " $(dataset_name).model\n"
-                                 "The dataset must be preprocessed beforehand, converting"
-                                 " non-numerical features to numerical values.\n"
-                                 "Command ej:\n"
-                                 "python train_model.py --path \"ruta/dataset.csv\""
-                                 "--column_name GENDER AGE SMOKING YELLOW_FINGERS ANXIETY PEER_PRESSURE"
-                                 " CHRONIC_DISEASE FATIGUE ALLERGY WHEEZING ALCOHOL_CONSUMING COUGHING "
-                                 "SHORTNESS_OF_BREATH SWALLOWING_DIFFICULTY CHEST_PAIN Outcome --num_trees 100"
-                                 "  --learning_rate 0.01 --n_jobs 4 --test_size 0.2 --max_depth 10",
-                                 formatter_class=argparse.RawTextHelpFormatter)
+    data = pd.read_csv(args.data_path)
 
-parser.add_argument('--path', type=str, help="Path to the CSV dataset ./my_path/my_dataset.csv")
-parser.add_argument('--column_names', nargs='+', type=str, 
-                    help="List of column names, the prediction column should be labeled as an [Outcome]\n"
-                    "Example:\n"
-                    "features1 | features2 | features3 | ... featuresN | prediction\n"
-                    "---------------------------------------------------------------\n"
-                    " glucose  | creatine  |    HDL    | ...   LDL     |   Outcome")
-parser.add_argument('--num_trees', type=int, help="LGBMClassifier number of trees for the model 2, 4, 8, 12")
-parser.add_argument('--learning_rate', type=float, help="LGBMClassifier learning rate for the model")
-parser.add_argument('--n_jobs', type=int, help="LGBMClassifier number of CPU cores to use")
-parser.add_argument('--test_size', type=float, help="LGBMClassifier proportion of the dataset to use for testing; Ej 0.2 0.3 etc")
-parser.add_argument('--max_depth', type=int, help="LGBMClassifier maximum depth of the trees suported < 8")
+    train_model_parse_and_store(data, args.output_model_name, args.num_trees, 
+                                args.learning_rate, args.n_jobs, args.test_size, args.max_depth)
 
-args = parser.parse_args()
-
-print(f"Path to the dataset: {args.path}")
-print(f"Column names: {args.column_names}")
-print(f"Number of trees: {args.num_trees}")
-print(f"Learning rate: {args.learning_rate}")
-print(f"Number of CPU cores: {args.n_jobs}")
-print(f"Test size: {args.test_size}")
-print(f"Maximum tree depth: {args.max_depth}")
-
-file_name = os.path.splitext(os.path.basename(args.path))[0]
-model_name = f"{file_name}.model"
-data = pd.read_csv(args.path, names=args.column_names)
-train_model_parse_and_store(data, model_name, args.num_trees, 
-                            args.learning_rate, args.n_jobs, args.test_size, args.max_depth)
+if __name__ == "__main__":
+    main()
