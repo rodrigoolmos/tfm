@@ -8,7 +8,6 @@ Help command
 python3 train_model.py -h
 
 ```
-
 ## Prerequisites
 
 - python3-pip
