@@ -10,7 +10,7 @@ Block design PING PONG buffers implementation
 [Go to Linux example implementation](linux_drivers/)
 
 # Building the system
-[Go to building the system](vivado/ping_pong_burst/)
+[Go to building the system](vivado/)
 
 # Training the model
 [Go to training the model](python_code/)
