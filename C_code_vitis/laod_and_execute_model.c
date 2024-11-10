@@ -264,15 +264,16 @@ int main() {
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
 
-    printf("Training model diabetes.csv\n");
-    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
+    printf("Training model alzheimers_processed_dataset.csv\n");
+    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    int n_features = 32; // no included result
 
     shuffle(features, read_samples);
 
     find_max_min_features(features, max_features, min_features);
 
     for (uint32_t p = 0; p < POPULATION; p++)
-        generate_rando_trees(trees_population[p], 8, N_TREES, max_features, min_features);
+        generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
 
     while(1){
         clock_t t1 = clock();
@@ -293,7 +294,7 @@ int main() {
         if(population_accuracy[0] >= 0.95)
             break;
 
-        mutate_population(trees_population, population_accuracy, max_features, min_features, 8);
+        mutate_population(trees_population, population_accuracy, max_features, min_features, n_features);
 
         clock_t t4 = clock();
         crossover(trees_population);
