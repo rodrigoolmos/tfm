@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "trees_managment.h"
+#include "predict.h"
 
 //#define TRAIN
 #define EVALUATE
@@ -189,50 +189,12 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
     
 }
 
-void find_max_min_features(struct feature features[MAX_TEST_SAMPLES],
-                                float max_features[N_FEATURE], float min_features[N_FEATURE]) {
-
-    for (int j = 0; j < N_FEATURE; j++) {
-        max_features[j] = features[0].features[j];
-        min_features[j] = features[0].features[j];
-    }
-
-    for (int i = 1; i < MAX_TEST_SAMPLES; i++) {
-        for (int j = 0; j < N_FEATURE; j++) {
-            if (features[i].features[j] > max_features[j]) {
-                max_features[j] = features[i].features[j];
-            }
-            if (features[i].features[j] < min_features[j]) {
-                min_features[j] = features[i].features[j];
-            }
-        }
-    }
-}
-
-void swap_features(struct feature* a, struct feature* b) {
-    struct feature temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
-void shuffle(struct feature* array, int n) {
-    for (int i = n - 1; i > 0; i--) {
-        int j = rand() % (i + 1);
-        swap_features(&array[i], &array[j]);
-    }
-}
-
 int main() {
-    float population_accuracy[POPULATION] = {0};
-    float max_features[N_FEATURE];
-    float min_features[N_FEATURE];
-
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
     tree_data trees_test[N_TREES][N_NODE_AND_LEAFS];
     srand(clock());
 
-#ifdef EVALUATE
     printf("Executing SW\n");
     printf("Executing diabetes.csv\n");
     read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
@@ -258,49 +220,6 @@ int main() {
     read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
     load_model(trees_test, "../trained_models/alzheimers.model");
     evaluate_model(trees_test, features, read_samples);
-#endif
 
-#ifdef TRAIN
-
-    tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
-
-    printf("Training model diabetes.csv\n");
-    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
-
-    shuffle(features, read_samples);
-
-    find_max_min_features(features, max_features, min_features);
-
-    for (uint32_t p = 0; p < POPULATION; p++)
-        generate_rando_trees(trees_population[p], 8, N_TREES, max_features, min_features);
-
-    while(1){
-        clock_t start1 = clock();
-        for (uint32_t p = 0; p < POPULATION; p++)
-            execute_model(trees_population[p], features, read_samples * 80/100, &population_accuracy[p], 0);
-        clock_t start2 = clock();
-
-        reorganize_population(population_accuracy, trees_population);
-
-        /////////////////////////////// tests ///////////////////////////////
-        for (int32_t p = POPULATION - 1; p >= 0; p--)
-            printf("Popullation accuracy %i, %f\n", p, population_accuracy[p]);
-        // evaluation features from out the training dataset
-        evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
-        /////////////////////////////////////////////////////////////////////
-
-        if(population_accuracy[0] >= 0.95)
-            break;
-
-        mutate_population(trees_population, population_accuracy, max_features, min_features, 8);
-
-        crossover(trees_population);
-
-        clock_t end = clock();
-        printf("Execution time inference %f, rest %f\n", ((float)start2-start1)/CLOCKS_PER_SEC, ((float)end-start2)/CLOCKS_PER_SEC);
-    }
-
-    evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
-#endif
     return 0;
 }
