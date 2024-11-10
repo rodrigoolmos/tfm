@@ -52,7 +52,7 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
 
     srand(clock());
     uint8_t n_feature;
-    int seed = 0;
+    int seed = time(NULL);
 
     for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
         for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
