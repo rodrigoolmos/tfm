@@ -100,11 +100,10 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
 
 void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
                         tree_data father[N_TREES][N_NODE_AND_LEAFS],
-                        tree_data son[N_TREES][N_NODE_AND_LEAFS],
-                        uint32_t n_trees){
+                        tree_data son[N_TREES][N_NODE_AND_LEAFS]){
 
 
-    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
+    for (uint32_t tree_i = 0; tree_i < N_TREES; tree_i++){
         if(rand() % 2){
             memcpy(son[tree_i], mother[tree_i], sizeof(tree_data) * N_NODE_AND_LEAFS);
         }else{
@@ -120,7 +119,7 @@ void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]
         int index_father = rand() % (10);
 
         reproducee_trees(trees_population[index_mother], trees_population[index_father],
-                                trees_population[p], N_TREES);
+                                trees_population[p]);
     }
 
 }
