@@ -5,8 +5,8 @@
 #include <time.h>
 #include "trees_managment.h"
 
-//#define TRAIN
-#define EVALUATE
+#define TRAIN
+//#define EVALUATE
 
 
 #define MAX_LINE_LENGTH 1024
