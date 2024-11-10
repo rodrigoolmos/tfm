@@ -9,6 +9,7 @@ set(DIR_OPENCL ${CMAKE_SOURCE_DIR}/openCL)
 set(DIR_HW ${CMAKE_SOURCE_DIR}/linux_drivers)
 
 find_package(OpenCL QUIET)
+find_package(OpenMP REQUIRED)
 
 if(OpenCL_FOUND)
     set(SOURCES_OPENCL ${DIR_OPENCL}/main.c)
@@ -48,6 +49,6 @@ if(UNIX AND NOT APPLE)
 
 endif()
 
-target_link_libraries(execute_model_sw PRIVATE predict_lib m)
+target_link_libraries(execute_model_sw PRIVATE predict_lib m OpenMP::OpenMP_C)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/trained_models)

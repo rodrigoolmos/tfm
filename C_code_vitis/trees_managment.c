@@ -2,8 +2,8 @@
 
 uint8_t right_index[255] =  {128, 65, 34, 19, 12, 9, 8, 0, 0, 11, 0, 0, 16, 15, 0, 0, 18, 0, 0, 27, 24, 23, 0, 0, 26, 0, 0, 31, 30, 0, 0, 33, 0, 0, 50, 43, 40, 39, 0, 0, 42, 0, 0, 47, 46, 0, 0, 49, 0, 0, 58, 55, 54, 0, 0, 57, 0, 0, 62, 61, 0, 0, 64, 0, 0, 97, 82, 75, 72, 71, 0, 0, 74, 0, 0, 79, 78, 0, 0, 81, 0, 0, 90, 87, 86, 0, 0, 89, 0, 0, 94, 93, 0, 0, 96, 0, 0, 113, 106, 103, 102, 0, 0, 105, 0, 0, 110, 109, 0, 0, 112, 0, 0, 121, 118, 117, 0, 0, 120, 0, 0, 125, 124, 0, 0, 127, 0, 0, 192, 161, 146, 139, 136, 135, 0, 0, 138, 0, 0, 143, 142, 0, 0, 145, 0, 0, 154, 151, 150, 0, 0, 153, 0, 0, 158, 157, 0, 0, 160, 0, 0, 177, 170, 167, 166, 0, 0, 169, 0, 0, 174, 173, 0, 0, 176, 0, 0, 185, 182, 181, 0, 0, 184, 0, 0, 189, 188, 0, 0, 191, 0, 0, 224, 209, 202, 199, 198, 0, 0, 201, 0, 0, 206, 205, 0, 0, 208, 0, 0, 217, 214, 213, 0, 0, 216, 0, 0, 221, 220, 0, 0, 223, 0, 0, 240, 233, 230, 229, 0, 0, 232, 0, 0, 237, 236, 0, 0, 239, 0, 0, 248, 245, 244, 0, 0, 247, 0, 0, 252, 251, 0, 0, 254, 0, 0};
 
-float generate_random_float(float min, float max) {
-    float random = (float)rand() / RAND_MAX;
+float generate_random_float(float min, float max, int* seed) {
+    float random = (float)rand_r(seed) / RAND_MAX;
 
     float distance = max - min;
     float step = distance * 0.01; // 1% de la distancia
@@ -11,38 +11,38 @@ float generate_random_float(float min, float max) {
     return min + round(random * (distance / step)) * step; // Multiplicamos por step para ajustar el paso
 }
 
-float generate_random_float_0_1() {
-    int boolean = (rand() % 2);
+float generate_random_float_0_1(int* seed) {
+    int boolean = (rand_r(seed) % 2);
 
     return (float)boolean;
 }
 
-float generate_threshold(float min, float max) {
+float generate_threshold(float min, float max,int* seed) {
     float random_threshold;
 
     if(min == 0 && max == 1){
-        random_threshold = generate_random_float_0_1();
+        random_threshold = generate_random_float_0_1(seed);
     }else{
-        random_threshold = generate_random_float(min, max);
+        random_threshold = generate_random_float(min, max, seed);
     }
 
     return random_threshold;
 }
 
-float generate_leaf_value() {
-    float random_f = ((float) 2 * rand() / (float)RAND_MAX) - 1.0;
+float generate_leaf_value(int *seed) {
+    float random_f = ((float) 2 * rand_r(seed) / (float)RAND_MAX) - 1.0;
 
     return random_f;
 }
 
-uint8_t generate_leaf_node(uint8_t prob__leaf_node) {
-    uint8_t random_8 = (uint8_t)rand() % 100;
+uint8_t generate_leaf_node(uint8_t prob__leaf_node, int *seed) {
+    uint8_t random_8 = (uint8_t)rand_r(seed) % 100;
 
     return random_8 > prob__leaf_node;
 }
 
-uint8_t generate_feture_index(uint8_t feature_length) {
-    uint8_t random_8 = (uint8_t)rand() % feature_length;
+uint8_t generate_feture_index(uint8_t feature_length, int *seed) {
+    uint8_t random_8 = (uint8_t)rand_r(seed) % feature_length;
 
     return random_8;
 }
@@ -52,15 +52,16 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
 
     srand(clock());
     uint8_t n_feature;
+    int seed = 0;
 
     for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
         for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
-            trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features);
+            trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, &seed);
             n_feature = trees[tree_i][node_i].tree_camps.feature_index;
             trees[tree_i][node_i].tree_camps.float_int_union.f = 
-                generate_threshold(min_features[n_feature], max_features[n_feature]);
+                generate_threshold(min_features[n_feature], max_features[n_feature], &seed);
             trees[tree_i][node_i].tree_camps.leaf_or_node = 
-                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30);
+                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, &seed);
             trees[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
         }
     }
@@ -69,7 +70,7 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
 void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS], 
                  tree_data output_tree[N_TREES][N_NODE_AND_LEAFS],
                  uint8_t n_features, float mutation_rate, 
-                 uint32_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE]) {
+                 uint32_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE], int *seed) {
 
     uint32_t mutation_threshold = mutation_rate * RAND_MAX;
     uint8_t n_feature;
@@ -78,19 +79,19 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
     for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
         for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
 
-            if (rand() < mutation_threshold) {
-                output_tree[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features);
+            if (rand_r(seed) < mutation_threshold) {
+                output_tree[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, seed);
             }
             n_feature = output_tree[tree_i][node_i].tree_camps.feature_index;
-            if (rand() < mutation_threshold) {
+            if (rand_r(seed) < mutation_threshold) {
                 output_tree[tree_i][node_i].tree_camps.float_int_union.f = 
-                    (right_index[node_i] == 0) ? generate_leaf_value() : 
-                    generate_threshold(min_features[n_feature], max_features[n_feature]);
+                    (right_index[node_i] == 0) ? generate_leaf_value(seed) : 
+                    generate_threshold(min_features[n_feature], max_features[n_feature], seed);
             }
 
-            if (rand() < mutation_threshold) {
+            if (rand_r(seed) < mutation_threshold) {
                 output_tree[tree_i][node_i].tree_camps.leaf_or_node = 
-                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30);
+                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, seed);
             }
 
             output_tree[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
@@ -128,11 +129,19 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
                         float population_accuracy[POPULATION], float max_features[N_FEATURE],
                         float min_features[N_FEATURE], uint8_t n_features){
 
-    for (uint32_t p = POPULATION/2; p < POPULATION; p++){
-        int index_elite = rand() % (2*POPULATION/3);
-        mutate_trees(trees_population[index_elite], trees_population[p], 
-                            n_features, 1 - population_accuracy[p], N_TREES,
-                                max_features, min_features);
+    printf("Número de hilos: %d\n", omp_get_max_threads());
+
+    #pragma omp parallel for schedule(static)
+    for (uint32_t p = POPULATION / 2; p < POPULATION; p++) {
+        unsigned int seed = omp_get_thread_num() + time(NULL);
+        int index_elite = rand_r(&seed) % (2 * POPULATION / 3);
+        
+        tree_data local_tree[N_TREES][N_NODE_AND_LEAFS];
+        memcpy(local_tree, trees_population[index_elite], sizeof(local_tree));
+        
+        mutate_trees(local_tree, trees_population[p], 
+                     n_features, 1 - population_accuracy[p], N_TREES,
+                     max_features, min_features, &seed);
     }
 }
 
