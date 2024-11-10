@@ -226,7 +226,7 @@ int main() {
     float population_accuracy[POPULATION] = {0};
     float max_features[N_FEATURE];
     float min_features[N_FEATURE];
-
+    
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
     tree_data trees_test[N_TREES][N_NODE_AND_LEAFS];
@@ -275,16 +275,16 @@ int main() {
         generate_rando_trees(trees_population[p], 8, N_TREES, max_features, min_features);
 
     while(1){
-        clock_t start1 = clock();
+        clock_t t1 = clock();
         for (uint32_t p = 0; p < POPULATION; p++)
             execute_model(trees_population[p], features, read_samples * 80/100, &population_accuracy[p], 0);
-        clock_t start2 = clock();
+        clock_t t2 = clock();
 
         reorganize_population(population_accuracy, trees_population);
 
         /////////////////////////////// tests ///////////////////////////////
-        for (int32_t p = POPULATION - 1; p >= 0; p--)
-            printf("Popullation accuracy %i, %f\n", p, population_accuracy[p]);
+        //for (int32_t p = POPULATION - 1; p >= 0; p--)
+        //    printf("Popullation accuracy %i, %f\n", p, population_accuracy[p]);
         // evaluation features from out the training dataset
         evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
         /////////////////////////////////////////////////////////////////////
@@ -294,10 +294,12 @@ int main() {
 
         mutate_population(trees_population, population_accuracy, max_features, min_features, 8);
 
+        clock_t t3 = clock();
         crossover(trees_population);
 
-        clock_t end = clock();
-        printf("Execution time inference %f, rest %f\n", ((float)start2-start1)/CLOCKS_PER_SEC, ((float)end-start2)/CLOCKS_PER_SEC);
+        clock_t t4 = clock();
+        printf("Execution time inference %f, mutate_population %f crossover %f \n", ((float)t2-t1)/CLOCKS_PER_SEC, 
+                                    ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC);
     }
 
     evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
