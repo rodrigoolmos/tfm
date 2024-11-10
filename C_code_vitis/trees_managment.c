@@ -90,7 +90,7 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
             }
 
             if (rand_r(seed) < mutation_threshold) {
-                output_tree[tree_i][node_i].tree_camps.leaf_or_node = 
+                output_tree[tree_i][node_i].tree_camps.leaf_or_node =  
                     (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, seed);
             }
 
