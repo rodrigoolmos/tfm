@@ -150,8 +150,8 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
             evaluated++;
         }
     }
-    printf("PONG!!!!!!\n");
-    printf("Accuracy %f evaluates samples %i of %i\n", 1.0 * accuracy / read_samples, evaluated, read_samples);
+    //printf("PONG!!!!!!\n");
+    printf("Accuracy real %f evaluates samples %i of %i\n", 1.0 * accuracy / read_samples, evaluated, read_samples);
     end_time = clock();
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     //printf("Tiempo de ejecucion por feature: %f segundos\n", cpu_time_used / read_samples);
@@ -181,8 +181,8 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
             evaluated++;
         }
     }
-    printf("PING!!!!!!\n");
-    printf("Accuracy %f evaluates samples %i of %i\n", 1.0 * accuracy / read_samples, evaluated, read_samples);
+    // printf("PING!!!!!!\n");
+    // printf("Accuracy %f evaluates samples %i of %i\n", 1.0 * accuracy / read_samples, evaluated, read_samples);
     end_time = clock();
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     //printf("Tiempo de ejecucion por feature: %f segundos\n\n\n", cpu_time_used / read_samples);
@@ -281,10 +281,11 @@ int main() {
         clock_t t2 = clock();
 
         reorganize_population(population_accuracy, trees_population);
+        clock_t t3 = clock();
 
         /////////////////////////////// tests ///////////////////////////////
         //for (int32_t p = POPULATION - 1; p >= 0; p--)
-        //    printf("Popullation accuracy %i, %f\n", p, population_accuracy[p]);
+        printf("Popullation accuracy train dataset %i, %f\n", 0, population_accuracy[0]);
         // evaluation features from out the training dataset
         evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
         /////////////////////////////////////////////////////////////////////
@@ -294,12 +295,13 @@ int main() {
 
         mutate_population(trees_population, population_accuracy, max_features, min_features, 8);
 
-        clock_t t3 = clock();
+        clock_t t4 = clock();
         crossover(trees_population);
 
-        clock_t t4 = clock();
-        printf("Execution time inference %f, mutate_population %f crossover %f \n", ((float)t2-t1)/CLOCKS_PER_SEC, 
-                                    ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC);
+        clock_t t5 = clock();
+        printf("Execution time inference %f, reorganize_population %f,"
+                                    "mutate_population %f, crossover %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
+                                    ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
     }
 
     evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
