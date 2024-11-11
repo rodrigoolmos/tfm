@@ -52,10 +52,12 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
 
     srand(clock());
     uint8_t n_feature;
-    int seed = time(NULL);
+    int seed = 0;
 
+    #pragma omp parallel for schedule(static)
     for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
         for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
+            seed = seed + omp_get_thread_num() + time(NULL) + tree_i + node_i;
             trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, &seed);
             n_feature = trees[tree_i][node_i].tree_camps.feature_index;
             trees[tree_i][node_i].tree_camps.float_int_union.f = 
@@ -75,26 +77,23 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
     uint32_t mutation_threshold = mutation_rate * RAND_MAX;
     uint8_t n_feature;
     memcpy(output_tree, input_tree, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
-
+    
     for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
-        for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
-
-            if (rand_r(seed) < mutation_threshold) {
+        *seed = *seed + tree_i;
+        uint32_t mutation_value = rand_r(seed);
+        if (mutation_value < mutation_threshold){
+            for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
+                *seed = *seed + node_i;
                 output_tree[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, seed);
-            }
-            n_feature = output_tree[tree_i][node_i].tree_camps.feature_index;
-            if (rand_r(seed) < mutation_threshold) {
+                output_tree[tree_i][node_i].tree_camps.leaf_or_node =  
+                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, seed);
                 output_tree[tree_i][node_i].tree_camps.float_int_union.f = 
                     (right_index[node_i] == 0) ? generate_leaf_value(seed) : 
                     generate_threshold(min_features[n_feature], max_features[n_feature], seed);
-            }
 
-            if (rand_r(seed) < mutation_threshold) {
-                output_tree[tree_i][node_i].tree_camps.leaf_or_node =  
-                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, seed);
+                n_feature = output_tree[tree_i][node_i].tree_camps.feature_index;
+                output_tree[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
             }
-
-            output_tree[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
         }
     }
 }
@@ -127,21 +126,22 @@ void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]
 
 void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS],
                         float population_accuracy[POPULATION], float max_features[N_FEATURE],
-                        float min_features[N_FEATURE], uint8_t n_features){
+                        float min_features[N_FEATURE], uint8_t n_features, float noise_factor){
 
     printf("Número de hilos: %d\n", omp_get_max_threads());
 
     #pragma omp parallel for schedule(static)
     for (uint32_t p = POPULATION / 2; p < POPULATION; p++) {
-        unsigned int seed = omp_get_thread_num() + time(NULL);
+        unsigned int seed = omp_get_thread_num() + time(NULL) + p;
         int index_elite = rand_r(&seed) % (2 * POPULATION / 3);
-        
+        float noise = (rand_r(&seed) / (float)RAND_MAX) * noise_factor;
+
         tree_data local_tree[N_TREES][N_NODE_AND_LEAFS];
         memcpy(local_tree, trees_population[index_elite], sizeof(local_tree));
         
-        mutate_trees(local_tree, trees_population[p], 
-                     n_features, 1 - population_accuracy[p], N_TREES,
-                     max_features, min_features, &seed);
+        mutate_trees(local_tree, trees_population[p], n_features,
+                    1 - (population_accuracy[p] + noise),
+                    N_TREES, max_features, min_features, &seed);
     }
 }
 

@@ -224,11 +224,14 @@ void shuffle(struct feature* array, int n) {
 
 int main() {
     float population_accuracy[POPULATION] = {0};
+    float iteration_accuracy[MEMORY_ACU_SIZE] = {0};
+    float noise_factor = 0;
     float max_features[N_FEATURE];
     float min_features[N_FEATURE];
     
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
+    int generation_ite = 0;
     tree_data trees_test[N_TREES][N_NODE_AND_LEAFS];
     srand(clock());
 
@@ -265,7 +268,7 @@ int main() {
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
 
     printf("Training model alzheimers_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
+    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES/5, features);
     int n_features = 32; // no included result
 
     shuffle(features, read_samples);
@@ -285,8 +288,8 @@ int main() {
         clock_t t3 = clock();
 
         /////////////////////////////// tests ///////////////////////////////
-        //for (int32_t p = POPULATION - 1; p >= 0; p--)
-        printf("Popullation accuracy train dataset %i, %f\n", 0, population_accuracy[0]);
+        for (int32_t p = POPULATION - 1; p >= 0; p--)
+            printf("Popullation accuracy train dataset %i, %f\n", p, population_accuracy[p]);
         // evaluation features from out the training dataset
         evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
         /////////////////////////////////////////////////////////////////////
@@ -294,12 +297,25 @@ int main() {
         if(population_accuracy[0] >= 0.95)
             break;
 
-        mutate_population(trees_population, population_accuracy, max_features, min_features, n_features);
+        mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, noise_factor);
 
         clock_t t4 = clock();
         crossover(trees_population);
-
         clock_t t5 = clock();
+
+        generation_ite ++;
+        noise_factor = 0;
+        iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] = population_accuracy[0];
+        for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
+            if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] == iteration_accuracy[accuracy_i]){
+                if (noise_factor < 1){
+                    noise_factor += 0.1;
+                }
+            }
+        }
+        
+        printf("Noise %f\n", noise_factor);
+        printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
         printf("Execution time inference %f, reorganize_population %f,"
                                     "mutate_population %f, crossover %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
                                     ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
