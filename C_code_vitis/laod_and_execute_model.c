@@ -231,6 +231,8 @@ int main() {
     
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
+    int stucked_gen = 0;
+    int golden_gen_ite = 10;
     int generation_ite = 0;
     tree_data trees_test[N_TREES][N_NODE_AND_LEAFS];
     srand(clock());
@@ -308,14 +310,34 @@ int main() {
         iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] = population_accuracy[0];
         for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
             if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] == iteration_accuracy[accuracy_i]){
-                if (noise_factor < 1 && generation_ite % MEMORY_ACU_SIZE != accuracy_i){
+                if ((generation_ite % MEMORY_ACU_SIZE) != accuracy_i){
                     noise_factor += 0.1;
                 }
             }
         }
-        
-        printf("Noise %f\n", noise_factor);
+
+        if (noise_factor >= 0.9){
+            printf("Stucked generation!!!\n");
+            stucked_gen++;
+            if (stucked_gen == golden_gen_ite){
+                golden_gen_ite = generation_ite - golden_gen_ite;
+                printf("To much stuked cataclysm !!!!!\n");
+                for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
+                    iteration_accuracy[accuracy_i] = 0;
+                }
+                stucked_gen = 0;
+                for (uint32_t p = POPULATION/20; p < POPULATION; p++){
+                    generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
+                }
+            }
+        }else{
+            stucked_gen = 0;
+        }
+
+
+        printf("Noise %f, stucked generations %i\n", noise_factor, stucked_gen);
         printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
+        printf("golden_gen_ite %i\n", golden_gen_ite);
         printf("Execution time inference %f, reorganize_population %f,"
                                     "mutate_population %f, crossover %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
                                     ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);

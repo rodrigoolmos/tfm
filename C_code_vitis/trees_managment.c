@@ -63,7 +63,7 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
             trees[tree_i][node_i].tree_camps.float_int_union.f = 
                 generate_threshold(min_features[n_feature], max_features[n_feature], &seed);
             trees[tree_i][node_i].tree_camps.leaf_or_node = 
-                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(10, &seed);
+                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(60, &seed);
             trees[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
         }
     }
@@ -86,7 +86,7 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
                 *seed = *seed + node_i;
                 output_tree[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, seed);
                 output_tree[tree_i][node_i].tree_camps.leaf_or_node =  
-                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, seed);
+                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(60, seed);
                 output_tree[tree_i][node_i].tree_camps.float_int_union.f = 
                     (right_index[node_i] == 0) ? generate_leaf_value(seed) : 
                     generate_threshold(min_features[n_feature], max_features[n_feature], seed);
@@ -114,9 +114,9 @@ void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
 
 void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]){
 
-    for (uint32_t p = POPULATION/4; p < (POPULATION/4 + POPULATION/10); p++){
-        int index_mother = rand() % (POPULATION/10);
-        int index_father = rand() % (POPULATION/10);
+    for (uint32_t p = POPULATION/20; p < (POPULATION/20 + POPULATION/20); p++){
+        int index_mother = rand() % (POPULATION/20);
+        int index_father = rand() % (POPULATION/20);
 
         reproducee_trees(trees_population[index_mother], trees_population[index_father],
                                 trees_population[p]);
