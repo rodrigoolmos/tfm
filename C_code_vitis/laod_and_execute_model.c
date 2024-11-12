@@ -269,9 +269,9 @@ int main() {
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
 
-    printf("Training model alzheimers_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES/5, features);
-    int n_features = 32; // no included result
+    printf("Training model diabetes.csv\n");
+    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES/5, features);
+    int n_features = 8; // no included result
 
     shuffle(features, read_samples);
 
@@ -319,12 +319,12 @@ int main() {
         for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
             if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] == iteration_accuracy[accuracy_i]){
                 if ((generation_ite % MEMORY_ACU_SIZE) != accuracy_i){
-                    noise_factor += 0.01;
+                    noise_factor += 0.02;
                 }
             }
         }
 
-        if (noise_factor >= 0.08){
+        if (noise_factor >= 0.16){
             printf("Stucked generation!!!\n");
             stucked_gen++;
             if (stucked_gen == golden_gen_ite){
@@ -334,7 +334,7 @@ int main() {
                     iteration_accuracy[accuracy_i] = 0;
                 }
                 stucked_gen = 0;
-                for (uint32_t p = POPULATION/20; p < POPULATION; p++){
+                for (uint32_t p = 1; p < POPULATION; p++){
                     generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
                 }
             }

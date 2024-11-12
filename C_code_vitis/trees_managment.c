@@ -131,9 +131,9 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
     printf("Número de hilos: %d\n", omp_get_max_threads());
 
     #pragma omp parallel for schedule(static)
-    for (uint32_t p = POPULATION / 2; p < POPULATION; p++) {
+    for (uint32_t p = POPULATION / 4; p < POPULATION; p++) {
         unsigned int seed = omp_get_thread_num() + time(NULL) + p;
-        int index_elite = rand_r(&seed) % (POPULATION / 2);
+        int index_elite = rand_r(&seed) % (POPULATION / 4);
 
         tree_data local_tree[N_TREES][N_NODE_AND_LEAFS];
         memcpy(local_tree, trees_population[index_elite], sizeof(local_tree));
