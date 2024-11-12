@@ -290,8 +290,16 @@ int main() {
         clock_t t3 = clock();
 
         /////////////////////////////// tests ///////////////////////////////
-        for (int32_t p = POPULATION - 1; p >= 0; p--)
-            printf("Popullation accuracy train dataset %i, %f\n", p, population_accuracy[p]);
+        for (int32_t p = POPULATION/10; p >= 0; p--){
+
+            printf("RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f\n"
+                            , p, population_accuracy[p]
+                            , p + POPULATION/20, population_accuracy[p + POPULATION/20]
+                            , p + POPULATION/10, population_accuracy[p + POPULATION/10]
+                            , p + POPULATION/4 , population_accuracy[p + POPULATION/4]
+                            , p + POPULATION/2 , population_accuracy[p + POPULATION/2]);
+        }
+
         // evaluation features from out the training dataset
         evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
         /////////////////////////////////////////////////////////////////////
@@ -311,12 +319,12 @@ int main() {
         for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
             if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] == iteration_accuracy[accuracy_i]){
                 if ((generation_ite % MEMORY_ACU_SIZE) != accuracy_i){
-                    noise_factor += 0.1;
+                    noise_factor += 0.01;
                 }
             }
         }
 
-        if (noise_factor >= 0.9){
+        if (noise_factor >= 0.08){
             printf("Stucked generation!!!\n");
             stucked_gen++;
             if (stucked_gen == golden_gen_ite){
