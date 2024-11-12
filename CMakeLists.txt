@@ -9,6 +9,9 @@ set(DIR_SW ${CMAKE_SOURCE_DIR}/C_code_vitis)
 set(DIR_OPENCL ${CMAKE_SOURCE_DIR}/openCL)
 set(DIR_HW ${CMAKE_SOURCE_DIR}/linux_drivers)
 
+set(OpenMP_C_FLAGS "-fopenmp")
+set(OpenMP_C_LIB_NAMES "gomp")
+
 find_package(OpenCL QUIET)
 find_package(OpenMP REQUIRED)
 
