@@ -63,7 +63,7 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
             trees[tree_i][node_i].tree_camps.float_int_union.f = 
                 generate_threshold(min_features[n_feature], max_features[n_feature], &seed);
             trees[tree_i][node_i].tree_camps.leaf_or_node = 
-                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, &seed);
+                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(10, &seed);
             trees[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
         }
     }
@@ -114,9 +114,9 @@ void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
 
 void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]){
 
-    for (uint32_t p = POPULATION/4; p < POPULATION/2; p++){
-        int index_mother = rand() % (POPULATION/4);
-        int index_father = rand() % (10);
+    for (uint32_t p = POPULATION/4; p < (POPULATION/4 + POPULATION/10); p++){
+        int index_mother = rand() % (POPULATION/10);
+        int index_father = rand() % (POPULATION/10);
 
         reproducee_trees(trees_population[index_mother], trees_population[index_father],
                                 trees_population[p]);
@@ -134,13 +134,12 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
     for (uint32_t p = POPULATION / 2; p < POPULATION; p++) {
         unsigned int seed = omp_get_thread_num() + time(NULL) + p;
         int index_elite = rand_r(&seed) % (2 * POPULATION / 3);
-        float noise = (rand_r(&seed) / (float)RAND_MAX) * noise_factor;
 
         tree_data local_tree[N_TREES][N_NODE_AND_LEAFS];
         memcpy(local_tree, trees_population[index_elite], sizeof(local_tree));
         
         mutate_trees(local_tree, trees_population[p], n_features,
-                    1 - (population_accuracy[p] + noise),
+                    1 - (population_accuracy[p] + noise_factor),
                     N_TREES, max_features, min_features, &seed);
     }
 }

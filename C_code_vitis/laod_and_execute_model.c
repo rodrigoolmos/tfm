@@ -308,7 +308,7 @@ int main() {
         iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] = population_accuracy[0];
         for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
             if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] == iteration_accuracy[accuracy_i]){
-                if (noise_factor < 1){
+                if (noise_factor < 1 && generation_ite % MEMORY_ACU_SIZE != accuracy_i){
                     noise_factor += 0.1;
                 }
             }
