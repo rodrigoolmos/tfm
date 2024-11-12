@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(laod_and_execute_model)
 
+set(CMAKE_C_COMPILER gcc)
 set(CMAKE_C_STANDARD 99)
 
 set(DIR_SW ${CMAKE_SOURCE_DIR}/C_code_vitis)
