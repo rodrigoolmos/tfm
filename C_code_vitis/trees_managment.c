@@ -30,7 +30,8 @@ float generate_threshold(float min, float max,int* seed) {
 }
 
 float generate_leaf_value(int *seed) {
-    float random_f = ((float) 2 * rand_r(seed) / (float)RAND_MAX) - 1.0;
+    //float random_f = ((float) 2 * rand_r(seed) / (float)RAND_MAX) - 1.0;
+    int random_f = 2*(rand_r(seed) % 2) - 1.0;
 
     return random_f;
 }
@@ -61,7 +62,10 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
             trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, &seed);
             n_feature = trees[tree_i][node_i].tree_camps.feature_index;
             trees[tree_i][node_i].tree_camps.float_int_union.f = 
-                generate_threshold(min_features[n_feature], max_features[n_feature], &seed);
+                    (right_index[node_i] == 0) ? generate_leaf_value(&seed) : 
+                    generate_threshold(min_features[n_feature], max_features[n_feature], &seed);
+
+                
             trees[tree_i][node_i].tree_camps.leaf_or_node = 
                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(60, &seed);
             trees[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
