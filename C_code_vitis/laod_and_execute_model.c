@@ -269,9 +269,9 @@ int main() {
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
 
-    printf("Training model diabetes.csv\n");
-    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES/5, features);
-    int n_features = 8; // no included result
+    printf("Training model Heart_Attack.csv\n");
+    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES/5, features);
+    int n_features = 13; // no included result
 
     shuffle(features, read_samples);
 
@@ -334,7 +334,7 @@ int main() {
                     iteration_accuracy[accuracy_i] = 0;
                 }
                 stucked_gen = 0;
-                for (uint32_t p = 1; p < POPULATION; p++){
+                for (uint32_t p = 0; p < POPULATION/10; p++){
                     generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
                 }
             }
