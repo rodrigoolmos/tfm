@@ -274,6 +274,8 @@ int main() {
     int n_features = 13; // no included result
 
     shuffle(features, read_samples);
+    shuffle(features, read_samples);
+    shuffle(features, read_samples);
 
     find_max_min_features(features, max_features, min_features);
 
