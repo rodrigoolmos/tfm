@@ -269,9 +269,9 @@ int main() {
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
 
-    printf("Training model Heart_Attack.csv\n");
-    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES/5, features);
-    int n_features = 13; // no included result
+    printf("Training model lung_cancer.csv\n");
+    read_samples = read_n_features("/home/rodrigo/Documents/tfm/datasets/lung_cancer.csv", MAX_TEST_SAMPLES/5, features);
+    int n_features = 15; // no included result
 
     shuffle(features, read_samples);
     shuffle(features, read_samples);
@@ -294,7 +294,7 @@ int main() {
         /////////////////////////////// tests ///////////////////////////////
         for (int32_t p = POPULATION/10; p >= 0; p--){
 
-            printf("RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f\n"
+            printf("RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f| RANKING %i -> %f\n"
                             , p, population_accuracy[p]
                             , p + POPULATION/20, population_accuracy[p + POPULATION/20]
                             , p + POPULATION/10, population_accuracy[p + POPULATION/10]
