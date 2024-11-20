@@ -93,6 +93,7 @@ void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
 
     int correct = 0;
     int32_t prediction;
+    uint32_t trees_score = 0;
     int32_t burst_size = 1;
     float features_burst[N_FEATURE];
 
@@ -101,12 +102,14 @@ void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
     for (int i = 0; i < read_samples; i++){
         memcpy(features_burst, features[i].features, sizeof(float) * N_FEATURE);  
         predict(tree, NULL, features_burst, NULL, &prediction, &burst_size, 0);
-        if (features[i].prediction == (prediction > 0))
+        if (features[i].prediction == (prediction > 0)){
+            trees_score += abs(prediction);
             correct++;
+        }
     }
 
     *accuracy = (float) correct / read_samples;
-    
+    *accuracy += ((0.01*trees_score) / (read_samples * N_TREES));
     if (sow_log)
         printf("Accuracy %f evaluates samples %i correct ones %i\n",
                         1.0 * (*accuracy), read_samples, correct);
@@ -269,9 +272,9 @@ int main() {
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
 
-    printf("Training model lung_cancer.csv\n");
-    read_samples = read_n_features("/home/rodrigo/Documents/tfm/datasets/lung_cancer.csv", MAX_TEST_SAMPLES/5, features);
-    int n_features = 15; // no included result
+    printf("Training model apple_quality.csv\n");
+    read_samples = read_n_features("/home/rodrigo/Documents/tfm/datasets/apple_quality.csv", MAX_TEST_SAMPLES, features);
+    int n_features = 8; // no included result
 
     shuffle(features, read_samples);
     shuffle(features, read_samples);
