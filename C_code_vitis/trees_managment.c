@@ -53,7 +53,7 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
 
     srand(clock());
     uint8_t n_feature;
-    int seed = 0;
+    int seed = trees;
 
     #pragma omp parallel for schedule(static)
     for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
