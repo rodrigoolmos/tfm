@@ -9,7 +9,7 @@
 #include <limits.h>
 #include <omp.h>
 
-#define POPULATION 1024*8
+#define POPULATION 1024
 #define MEMORY_ACU_SIZE 10
 
 
