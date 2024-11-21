@@ -12,7 +12,7 @@
 #define MAX_LINE_LENGTH 1024
 #define MAX_COLUMNS 10
 
-#define MAX_TEST_SAMPLES 3000
+#define MAX_TEST_SAMPLES 30000
 
 struct feature {
     float features[N_FEATURE];
@@ -309,7 +309,7 @@ int main() {
         evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
         /////////////////////////////////////////////////////////////////////
 
-        if(population_accuracy[0] >= 0.95)
+        if(population_accuracy[0] >= 0.99)
             break;
 
         mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, noise_factor);
