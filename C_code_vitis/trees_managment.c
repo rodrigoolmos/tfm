@@ -62,7 +62,7 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
             trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, &seed);
             n_feature = trees[tree_i][node_i].tree_camps.feature_index;
             trees[tree_i][node_i].tree_camps.leaf_or_node = 
-                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(60, &seed);
+                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, &seed);
 
             if (trees[tree_i][node_i].tree_camps.leaf_or_node  == 0){
                 trees[tree_i][node_i].tree_camps.float_int_union.i =
@@ -94,7 +94,7 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
                 *seed = *seed + node_i;
                 output_tree[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, seed);
                 output_tree[tree_i][node_i].tree_camps.leaf_or_node =  
-                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(60, seed);
+                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, seed);
 
                 n_feature = output_tree[tree_i][node_i].tree_camps.feature_index;
 
