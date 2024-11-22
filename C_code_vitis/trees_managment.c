@@ -49,7 +49,7 @@ uint8_t generate_feture_index(uint8_t feature_length, int *seed) {
 }
 
 void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS], 
-                    uint8_t n_features, uint8_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE]) {
+                    uint8_t n_features, uint16_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE]) {
 
     srand(clock());
     uint8_t n_feature;
