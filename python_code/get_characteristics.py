@@ -1,4 +1,8 @@
 import pandas as pd
+from pandas.plotting import scatter_matrix
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def calculate_correlation(file_path):
     """
@@ -36,11 +40,13 @@ def calculate_correlation(file_path):
         print("Caracteristicas")
         print(data.describe())
 
+        sns.pairplot(data=data,hue=data.columns[-1])
+        plt.show()
 
     except Exception as e:
         print(f"Error: {e}")
 
 # Ejemplo de uso
-file_path = "./datasets/mushroom_cleaned.csv"  # Cambiar por la ruta de tu archivo CSV
+file_path = "/home/rodrigo/Documents/tfm/datasets/SoA/paper1/haberman.csv"  # Cambiar por la ruta de tu archivo CSV
 print(file_path)
 correlations = calculate_correlation(file_path)
