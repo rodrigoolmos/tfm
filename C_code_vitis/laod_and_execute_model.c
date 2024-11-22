@@ -271,9 +271,10 @@ int main() {
 #ifdef TRAIN
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
+    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/diabetes.csv";
 
-    printf("Training model apple_quality.csv\n");
-    read_samples = read_n_features("/home/rodrigo/Documents/tfm/datasets/apple_quality.csv", MAX_TEST_SAMPLES, features);
+    printf("Training model %s\n", path);
+    read_samples = read_n_features(path, MAX_TEST_SAMPLES, features);
     int n_features = 8; // no included result
 
     shuffle(features, read_samples);
