@@ -271,11 +271,11 @@ int main() {
 #ifdef TRAIN
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
-    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/diabetes.csv";
+    char *path ="/home/rodrigo/Documents/tfm/datasets/SoA/paper1/haberman.csv";
 
     printf("Training model %s\n", path);
     read_samples = read_n_features(path, MAX_TEST_SAMPLES, features);
-    int n_features = 8; // no included result
+    int n_features = 3; // no included result
 
     shuffle(features, read_samples);
     shuffle(features, read_samples);
@@ -340,7 +340,7 @@ int main() {
                     iteration_accuracy[accuracy_i] = 0;
                 }
                 stucked_gen = 0;
-                for (uint32_t p = 0; p < POPULATION/10; p++){
+                for (uint32_t p = 0; p < 8*POPULATION/10; p++){
                     generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
                 }
             }
