@@ -4,6 +4,12 @@
 #define N_TREES 128             // Adjust according to the number of trees in your model
 #define N_FEATURE 32            // Adjust according to the number of features in your model
 #define MAX_BURST_FEATURES 256  // Adjust according to the number burst features
+#define MAX_TEST_SAMPLES 30000
+
+struct feature {
+    float features[N_FEATURE];
+    uint8_t prediction;
+};
 
 typedef union {
     float f;
@@ -30,3 +36,11 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
             int32_t prediction_pong[MAX_BURST_FEATURES], 
             int32_t *features_burst_length,
 			int32_t ping_pong);
+
+void find_max_min_features(struct feature features[MAX_TEST_SAMPLES],
+                                float max_features[N_FEATURE], float min_features[N_FEATURE]);
+
+void swap_features(struct feature* a, struct feature* b);
+
+void shuffle(struct feature* array, int n);
+

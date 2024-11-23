@@ -1,4 +1,4 @@
-#include "trees_managment.h"
+#include "train.h"
 
 uint8_t right_index[255] =  {128, 65, 34, 19, 12, 9, 8, 0, 0, 11, 0, 0, 16, 15, 0, 0, 18, 0, 0, 27, 24, 23, 0, 0, 26, 0, 0, 31, 30, 0, 0, 33, 0, 0, 50, 43, 40, 39, 0, 0, 42, 0, 0, 47, 46, 0, 0, 49, 0, 0, 58, 55, 54, 0, 0, 57, 0, 0, 62, 61, 0, 0, 64, 0, 0, 97, 82, 75, 72, 71, 0, 0, 74, 0, 0, 79, 78, 0, 0, 81, 0, 0, 90, 87, 86, 0, 0, 89, 0, 0, 94, 93, 0, 0, 96, 0, 0, 113, 106, 103, 102, 0, 0, 105, 0, 0, 110, 109, 0, 0, 112, 0, 0, 121, 118, 117, 0, 0, 120, 0, 0, 125, 124, 0, 0, 127, 0, 0, 192, 161, 146, 139, 136, 135, 0, 0, 138, 0, 0, 143, 142, 0, 0, 145, 0, 0, 154, 151, 150, 0, 0, 153, 0, 0, 158, 157, 0, 0, 160, 0, 0, 177, 170, 167, 166, 0, 0, 169, 0, 0, 174, 173, 0, 0, 176, 0, 0, 185, 182, 181, 0, 0, 184, 0, 0, 189, 188, 0, 0, 191, 0, 0, 224, 209, 202, 199, 198, 0, 0, 201, 0, 0, 206, 205, 0, 0, 208, 0, 0, 217, 214, 213, 0, 0, 216, 0, 0, 221, 220, 0, 0, 223, 0, 0, 240, 233, 230, 229, 0, 0, 232, 0, 0, 237, 236, 0, 0, 239, 0, 0, 248, 245, 244, 0, 0, 247, 0, 0, 252, 251, 0, 0, 254, 0, 0};
 
@@ -203,4 +203,37 @@ void quicksort(float population_accuracy[POPULATION],
 void reorganize_population(float population_accuracy[POPULATION], 
                     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]) {
     quicksort(population_accuracy, trees_population, 0, POPULATION - 1);
+}
+
+void find_max_min_features(struct feature features[MAX_TEST_SAMPLES],
+                                float max_features[N_FEATURE], float min_features[N_FEATURE]) {
+
+    for (int j = 0; j < N_FEATURE; j++) {
+        max_features[j] = features[0].features[j];
+        min_features[j] = features[0].features[j];
+    }
+
+    for (int i = 1; i < MAX_TEST_SAMPLES; i++) {
+        for (int j = 0; j < N_FEATURE; j++) {
+            if (features[i].features[j] > max_features[j]) {
+                max_features[j] = features[i].features[j];
+            }
+            if (features[i].features[j] < min_features[j]) {
+                min_features[j] = features[i].features[j];
+            }
+        }
+    }
+}
+
+void swap_features(struct feature* a, struct feature* b) {
+    struct feature temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void shuffle(struct feature* array, int n) {
+    for (int i = n - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        swap_features(&array[i], &array[j]);
+    }
 }

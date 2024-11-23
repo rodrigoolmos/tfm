@@ -3,27 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "trees_managment.h"
+#include "train.h"
 
 #define TRAIN
-//#define EVALUATE
-
-
+#define EVALUATE
 #define MAX_LINE_LENGTH 1024
-#define MAX_COLUMNS 10
-
-#define MAX_TEST_SAMPLES 30000
-
-struct feature {
-    float features[N_FEATURE];
-    uint8_t prediction;
-};
-
-struct dataset {
-    struct feature *data;
-    int num_rows;
-    int num_cols;
-};
 
 void load_model(
             tree_data tree_data[N_TREES][N_NODE_AND_LEAFS],
@@ -47,8 +31,6 @@ void load_model(
     }else{
         perror("Unknown file type");
     }
-    
-
 
     fclose(file);
 }
@@ -115,8 +97,6 @@ void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
                         1.0 * (*accuracy), read_samples, correct);
     
 }
-
-
 
 void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS], 
                     struct feature *features, int read_samples){
@@ -190,39 +170,6 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
     //printf("Tiempo de ejecucion por feature: %f segundos\n\n\n", cpu_time_used / read_samples);
     
-}
-
-void find_max_min_features(struct feature features[MAX_TEST_SAMPLES],
-                                float max_features[N_FEATURE], float min_features[N_FEATURE]) {
-
-    for (int j = 0; j < N_FEATURE; j++) {
-        max_features[j] = features[0].features[j];
-        min_features[j] = features[0].features[j];
-    }
-
-    for (int i = 1; i < MAX_TEST_SAMPLES; i++) {
-        for (int j = 0; j < N_FEATURE; j++) {
-            if (features[i].features[j] > max_features[j]) {
-                max_features[j] = features[i].features[j];
-            }
-            if (features[i].features[j] < min_features[j]) {
-                min_features[j] = features[i].features[j];
-            }
-        }
-    }
-}
-
-void swap_features(struct feature* a, struct feature* b) {
-    struct feature temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
-void shuffle(struct feature* array, int n) {
-    for (int i = n - 1; i > 0; i--) {
-        int j = rand() % (i + 1);
-        swap_features(&array[i], &array[j]);
-    }
 }
 
 int main() {
