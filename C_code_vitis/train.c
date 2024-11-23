@@ -62,7 +62,7 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
             trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, &seed);
             n_feature = trees[tree_i][node_i].tree_camps.feature_index;
             trees[tree_i][node_i].tree_camps.leaf_or_node = 
-                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, &seed);
+                   (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(60, &seed);
 
             if (trees[tree_i][node_i].tree_camps.leaf_or_node  == 0){
                 trees[tree_i][node_i].tree_camps.float_int_union.i =
@@ -94,13 +94,13 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
                 *seed = *seed + node_i;
                 output_tree[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, seed);
                 output_tree[tree_i][node_i].tree_camps.leaf_or_node =  
-                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(30, seed);
+                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(60, seed);
 
                 n_feature = output_tree[tree_i][node_i].tree_camps.feature_index;
 
                 if (output_tree[tree_i][node_i].tree_camps.leaf_or_node == 0){
-                output_tree[tree_i][node_i].tree_camps.float_int_union.i =
-                    generate_leaf_value(seed);
+                    output_tree[tree_i][node_i].tree_camps.float_int_union.i =
+                        generate_leaf_value(seed);
                 }else{
                     output_tree[tree_i][node_i].tree_camps.float_int_union.f =
                         generate_threshold(min_features[n_feature], max_features[n_feature], seed);
@@ -129,8 +129,8 @@ void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
 void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]){
 
     for (uint32_t p = POPULATION/20; p < (POPULATION/20 + POPULATION/20); p++){
-        int index_mother = rand() % (POPULATION/40);
-        int index_father = rand() % (POPULATION/40);
+        int index_mother = rand() % (POPULATION/80);
+        int index_father = rand() % (POPULATION/80) + POPULATION/80;
 
         reproducee_trees(trees_population[index_mother], trees_population[index_father],
                                 trees_population[p]);
