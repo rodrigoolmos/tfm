@@ -129,8 +129,8 @@ void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
 void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]){
 
     for (uint32_t p = POPULATION/20; p < (POPULATION/20 + POPULATION/20); p++){
-        int index_mother = rand() % (POPULATION/40);
-        int index_father = rand() % (POPULATION/40);
+        int index_mother = rand() % (POPULATION/80);
+        int index_father = rand() % (POPULATION/80) + POPULATION/80;
 
         reproducee_trees(trees_population[index_mother], trees_population[index_father],
                                 trees_population[p]);
