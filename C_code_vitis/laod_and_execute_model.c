@@ -195,13 +195,14 @@ int main() {
     srand(clock());
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
-    char *path ="/home/rodrigo/Documents/tfm/datasets/SoA/paper1/haberman.csv";
+    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/diabetes.csv";
 
     printf("Training model %s\n", path);
     int n_features;
     read_samples = read_n_features(path, MAX_TEST_SAMPLES, features, &n_features);
     n_features--; // remove predictions
 
+    
     shuffle(features, read_samples);
 
     find_max_min_features(features, max_features, min_features);
@@ -211,11 +212,13 @@ int main() {
 
     while(1){
         
-        shuffle(features, read_samples* 80/100);
+        if (!(generation_ite % 20)){
+            shuffle(features, read_samples* 80/100);
+        }
 
         clock_t t1 = clock();
         for (uint32_t p = 0; p < POPULATION; p++)
-            execute_model(trees_population[p], features, read_samples * 70/100, &population_accuracy[p], 0);
+            execute_model(trees_population[p], features, read_samples * 50/100, &population_accuracy[p], 0);
         clock_t t2 = clock();
 
         reorganize_population(population_accuracy, trees_population);
