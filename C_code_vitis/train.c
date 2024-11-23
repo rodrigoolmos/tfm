@@ -140,7 +140,7 @@ void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]
 
 void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS],
                         float population_accuracy[POPULATION], float max_features[N_FEATURE],
-                        float min_features[N_FEATURE], uint8_t n_features, float noise_factor){
+                        float min_features[N_FEATURE], uint8_t n_features, float mutation_factor){
 
     printf("Número de hilos: %d\n", omp_get_max_threads());
 
@@ -153,7 +153,7 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
         memcpy(local_tree, trees_population[index_elite], sizeof(local_tree));
         
         mutate_trees(local_tree, trees_population[p], n_features,
-                    1 - (population_accuracy[p] + noise_factor),
+                    1 - (population_accuracy[p] + mutation_factor),
                     N_TREES, max_features, min_features, &seed);
     }
 }
