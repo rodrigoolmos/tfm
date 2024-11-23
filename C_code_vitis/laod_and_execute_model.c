@@ -5,8 +5,6 @@
 #include <time.h>
 #include "train.h"
 
-#define TRAIN
-#define EVALUATE
 #define MAX_LINE_LENGTH 1024
 
 void load_model(
@@ -35,7 +33,7 @@ void load_model(
     fclose(file);
 }
 
-int read_n_features(const char *csv_file, int n, struct feature *features) {
+int read_n_features(const char *csv_file, int n, struct feature *features, int *n_col) {
     FILE *file = fopen(csv_file, "r");
     char line[MAX_LINE_LENGTH];
     int features_read = 0;
@@ -49,18 +47,18 @@ int read_n_features(const char *csv_file, int n, struct feature *features) {
     while (fgets(line, MAX_LINE_LENGTH, file) && features_read < n) {
         float temp[N_FEATURE + 1];
         char *token = strtok(line, ",");
-        int index = 0;
+        *n_col = 0;
 
-        while (token != NULL && index < N_FEATURE + 1) {
-            temp[index] = atof(token);
+        while (token != NULL && (*n_col) < N_FEATURE + 1) {
+            temp[*n_col] = atof(token);
             token = strtok(NULL, ",");
-            index++;
+            (*n_col)++;
         }
 
-        for (i = 0; i < index - 1; i++) {
+        for (i = 0; i < *n_col - 1; i++) {
             features[features_read].features[i] = temp[i];
         }
-        features[features_read].prediction = (uint8_t) temp[index - 1];
+        features[features_read].prediction = (uint8_t) temp[*n_col - 1];
 
         features_read++;
     }
@@ -172,6 +170,18 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
     
 }
 
+void show_logs(float population_accuracy[POPULATION]){
+
+        for (int32_t p = POPULATION/10; p >= 0; p--){
+            printf("RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f| RANKING %i -> %f\n"
+                            , p, population_accuracy[p]
+                            , p + POPULATION/20, population_accuracy[p + POPULATION/20]
+                            , p + POPULATION/10, population_accuracy[p + POPULATION/10]
+                            , p + POPULATION/4 , population_accuracy[p + POPULATION/4]
+                            , p + POPULATION/2 , population_accuracy[p + POPULATION/2]);
+        }
+}
+
 int main() {
     float population_accuracy[POPULATION] = {0};
     float iteration_accuracy[MEMORY_ACU_SIZE] = {0};
@@ -184,45 +194,17 @@ int main() {
     int stucked_gen = 0;
     int golden_gen_ite = 10;
     int generation_ite = 0;
-    tree_data trees_test[N_TREES][N_NODE_AND_LEAFS];
+    tree_data golden_tree[N_TREES][N_NODE_AND_LEAFS];
+    float golden_accuracy;
     srand(clock());
 
-#ifdef EVALUATE
-    printf("Executing SW\n");
-    printf("Executing diabetes.csv\n");
-    read_samples = read_n_features("../datasets/diabetes.csv", MAX_TEST_SAMPLES, features);
-    load_model(trees_test, "../trained_models/diabetes.model");
-    evaluate_model(trees_test, features, read_samples);
-    
-    printf("Executing Heart_Attack.csv\n");
-    read_samples = read_n_features("../datasets/Heart_Attack.csv", MAX_TEST_SAMPLES, features);
-    load_model(trees_test, "../trained_models/heart_attack.model");
-    evaluate_model(trees_test, features, read_samples);
-
-    printf("Executing Lung_Cancer_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(trees_test, "../trained_models/lung_cancer.model");
-    evaluate_model(trees_test, features, read_samples);
-
-    printf("Executing anemia_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(trees_test, "../trained_models/anemia.model");
-    evaluate_model(trees_test, features, read_samples);
-
-    printf("Executing alzheimers_processed_dataset.csv\n");
-    read_samples = read_n_features("../datasets/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features);
-    load_model(trees_test, "../trained_models/alzheimers.model");
-    evaluate_model(trees_test, features, read_samples);
-#endif
-
-#ifdef TRAIN
-
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
-    char *path ="/home/rodrigo/Documents/tfm/datasets/SoA/paper1/haberman.csv";
+    char *path ="/home/rodrigo/tfm/datasets/SoA/paper1/haberman.csv";
 
     printf("Training model %s\n", path);
-    read_samples = read_n_features(path, MAX_TEST_SAMPLES, features);
-    int n_features = 3; // no included result
+    int n_features;
+    read_samples = read_n_features(path, MAX_TEST_SAMPLES, features, &n_features);
+    n_features--; // remove predictions
 
     shuffle(features, read_samples);
     shuffle(features, read_samples);
@@ -243,15 +225,8 @@ int main() {
         clock_t t3 = clock();
 
         /////////////////////////////// tests ///////////////////////////////
-        for (int32_t p = POPULATION/10; p >= 0; p--){
 
-            printf("RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f| RANKING %i -> %f\n"
-                            , p, population_accuracy[p]
-                            , p + POPULATION/20, population_accuracy[p + POPULATION/20]
-                            , p + POPULATION/10, population_accuracy[p + POPULATION/10]
-                            , p + POPULATION/4 , population_accuracy[p + POPULATION/4]
-                            , p + POPULATION/2 , population_accuracy[p + POPULATION/2]);
-        }
+        show_logs(population_accuracy);
 
         // evaluation features from out the training dataset
         evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
@@ -283,13 +258,19 @@ int main() {
             if (stucked_gen == golden_gen_ite){
                 golden_gen_ite = generation_ite - golden_gen_ite;
                 printf("To much stuked cataclysm !!!!!\n");
+
+                golden_accuracy = population_accuracy[0];
+                memcpy(golden_tree, trees_population[0], sizeof(tree_data));
+
                 for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
                     iteration_accuracy[accuracy_i] = 0;
                 }
                 stucked_gen = 0;
-                for (uint32_t p = 0; p < 8*POPULATION/10; p++){
+                for (uint32_t p = 0; p < POPULATION; p++){
                     generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
                 }
+
+                evaluate_model(golden_tree, &features[read_samples * 80/100], read_samples * 20/100);
             }
         }else{
             stucked_gen = 0;
@@ -305,6 +286,6 @@ int main() {
     }
 
     evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
-#endif
     return 0;
+
 }
