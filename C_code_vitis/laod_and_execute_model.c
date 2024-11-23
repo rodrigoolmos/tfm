@@ -192,7 +192,7 @@ int main() {
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
     int cataclysm_cnt = 0;
-    int golden_gen_ite = 10;
+    int cataclysm_threshold = 10;
     int generation_ite = 0;
     tree_data golden_tree[N_TREES][N_NODE_AND_LEAFS];
     float golden_accuracy = 0;
@@ -253,8 +253,8 @@ int main() {
         if (mutation_factor >= 0.24){
             printf("Stucked generation!!!\n");
             cataclysm_cnt++;
-            if (cataclysm_cnt == golden_gen_ite){
-                golden_gen_ite = generation_ite - golden_gen_ite;
+            if (cataclysm_cnt == cataclysm_threshold){
+                cataclysm_threshold = generation_ite - cataclysm_threshold;
                 printf("To much stuked cataclysm !!!!!\n");
                 
                 if (population_accuracy[0] > golden_accuracy){
@@ -279,7 +279,7 @@ int main() {
 
         printf("Mutation_factor %f, cataclysm_cnt %i\n", mutation_factor, cataclysm_cnt);
         printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
-        printf("golden_gen_ite %i\n", golden_gen_ite);
+        printf("Cataclysm_threshold %i\n", cataclysm_threshold);
         printf("Execution time inference %f, reorganize_population %f,"
                                     "mutate_population %f, crossover %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
                                     ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
