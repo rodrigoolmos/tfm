@@ -191,15 +191,11 @@ int main() {
     
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
-    int cataclysm_cnt = 0;
-    int cataclysm_threshold = 10;
     int generation_ite = 0;
-    tree_data golden_tree[N_TREES][N_NODE_AND_LEAFS];
-    float golden_accuracy = 0;
     srand(clock());
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
-    char *path ="/home/rodrigo/tfm/datasets/kaggle/Heart_Attack.csv";
+    char *path ="/home/rodrigo/Documents/tfm/datasets/SoA/paper1/haberman.csv";
 
     printf("Training model %s\n", path);
     int n_features;
@@ -214,9 +210,12 @@ int main() {
         generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
 
     while(1){
+        
+        shuffle(features, read_samples* 80/100);
+
         clock_t t1 = clock();
         for (uint32_t p = 0; p < POPULATION; p++)
-            execute_model(trees_population[p], features, read_samples * 80/100, &population_accuracy[p], 0);
+            execute_model(trees_population[p], features, read_samples * 70/100, &population_accuracy[p], 0);
         clock_t t2 = clock();
 
         reorganize_population(population_accuracy, trees_population);
@@ -230,8 +229,9 @@ int main() {
         evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
         /////////////////////////////////////////////////////////////////////
 
-        if(population_accuracy[0] >= 1 || generation_ite > 100000)
+        if(population_accuracy[0] >= 1){
             break;
+        }
 
         mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, mutation_factor);
 
@@ -250,36 +250,8 @@ int main() {
             }
         }
 
-        if (mutation_factor >= 0.24){
-            printf("Stucked generation!!!\n");
-            cataclysm_cnt++;
-            if (cataclysm_cnt == cataclysm_threshold){
-                cataclysm_threshold = generation_ite - cataclysm_threshold;
-                printf("To much stuked cataclysm !!!!!\n");
-                
-                if (population_accuracy[0] > golden_accuracy){
-                    golden_accuracy = population_accuracy[0];
-                    memcpy(golden_tree, trees_population[0], sizeof(tree_data));
-                }
-
-                for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
-                    iteration_accuracy[accuracy_i] = 0;
-                }
-                cataclysm_cnt = 0;
-                for (uint32_t p = 0; p < POPULATION; p++){
-                    generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
-                }
-
-                evaluate_model(golden_tree, &features[read_samples * 80/100], read_samples * 20/100);
-            }
-        }else{
-            cataclysm_cnt = 0;
-        }
-
-
-        printf("Mutation_factor %f, cataclysm_cnt %i\n", mutation_factor, cataclysm_cnt);
+        printf("Mutation_factor %f\n", mutation_factor);
         printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
-        printf("Cataclysm_threshold %i\n", cataclysm_threshold);
         printf("Execution time inference %f, reorganize_population %f,"
                                     "mutate_population %f, crossover %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
                                     ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
