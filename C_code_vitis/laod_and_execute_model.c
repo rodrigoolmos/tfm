@@ -191,7 +191,7 @@ int main() {
     
     struct feature features[MAX_TEST_SAMPLES];
     int read_samples;
-    int stucked_gen = 0;
+    int cataclysm_cnt = 0;
     int golden_gen_ite = 10;
     int generation_ite = 0;
     tree_data golden_tree[N_TREES][N_NODE_AND_LEAFS];
@@ -245,15 +245,15 @@ int main() {
         for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
             if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] == iteration_accuracy[accuracy_i]){
                 if ((generation_ite % MEMORY_ACU_SIZE) != accuracy_i){
-                    mutation_factor += 0.02;
+                    mutation_factor += 0.03;
                 }
             }
         }
 
-        if (mutation_factor >= 0.16){
+        if (mutation_factor >= 0.24){
             printf("Stucked generation!!!\n");
-            stucked_gen++;
-            if (stucked_gen == golden_gen_ite){
+            cataclysm_cnt++;
+            if (cataclysm_cnt == golden_gen_ite){
                 golden_gen_ite = generation_ite - golden_gen_ite;
                 printf("To much stuked cataclysm !!!!!\n");
                 
@@ -265,7 +265,7 @@ int main() {
                 for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
                     iteration_accuracy[accuracy_i] = 0;
                 }
-                stucked_gen = 0;
+                cataclysm_cnt = 0;
                 for (uint32_t p = 0; p < POPULATION; p++){
                     generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
                 }
@@ -273,11 +273,11 @@ int main() {
                 evaluate_model(golden_tree, &features[read_samples * 80/100], read_samples * 20/100);
             }
         }else{
-            stucked_gen = 0;
+            cataclysm_cnt = 0;
         }
 
 
-        printf("Mutation_factor %f, stucked generations %i\n", mutation_factor, stucked_gen);
+        printf("Mutation_factor %f, cataclysm_cnt %i\n", mutation_factor, cataclysm_cnt);
         printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
         printf("golden_gen_ite %i\n", golden_gen_ite);
         printf("Execution time inference %f, reorganize_population %f,"
