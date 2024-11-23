@@ -185,7 +185,7 @@ void show_logs(float population_accuracy[POPULATION]){
 int main() {
     float population_accuracy[POPULATION] = {0};
     float iteration_accuracy[MEMORY_ACU_SIZE] = {0};
-    float noise_factor = 0;
+    float mutation_factor = 0;
     float max_features[N_FEATURE];
     float min_features[N_FEATURE];
     
@@ -195,19 +195,17 @@ int main() {
     int golden_gen_ite = 10;
     int generation_ite = 0;
     tree_data golden_tree[N_TREES][N_NODE_AND_LEAFS];
-    float golden_accuracy;
+    float golden_accuracy = 0;
     srand(clock());
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
-    char *path ="/home/rodrigo/tfm/datasets/SoA/paper1/haberman.csv";
+    char *path ="/home/rodrigo/tfm/datasets/kaggle/Heart_Attack.csv";
 
     printf("Training model %s\n", path);
     int n_features;
     read_samples = read_n_features(path, MAX_TEST_SAMPLES, features, &n_features);
     n_features--; // remove predictions
 
-    shuffle(features, read_samples);
-    shuffle(features, read_samples);
     shuffle(features, read_samples);
 
     find_max_min_features(features, max_features, min_features);
@@ -232,35 +230,37 @@ int main() {
         evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
         /////////////////////////////////////////////////////////////////////
 
-        if(population_accuracy[0] >= 0.99)
+        if(population_accuracy[0] >= 1 || generation_ite > 100000)
             break;
 
-        mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, noise_factor);
+        mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, mutation_factor);
 
         clock_t t4 = clock();
         crossover(trees_population);
         clock_t t5 = clock();
 
         generation_ite ++;
-        noise_factor = 0;
+        mutation_factor = 0;
         iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] = population_accuracy[0];
         for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
             if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] == iteration_accuracy[accuracy_i]){
                 if ((generation_ite % MEMORY_ACU_SIZE) != accuracy_i){
-                    noise_factor += 0.02;
+                    mutation_factor += 0.02;
                 }
             }
         }
 
-        if (noise_factor >= 0.16){
+        if (mutation_factor >= 0.16){
             printf("Stucked generation!!!\n");
             stucked_gen++;
             if (stucked_gen == golden_gen_ite){
                 golden_gen_ite = generation_ite - golden_gen_ite;
                 printf("To much stuked cataclysm !!!!!\n");
-
-                golden_accuracy = population_accuracy[0];
-                memcpy(golden_tree, trees_population[0], sizeof(tree_data));
+                
+                if (population_accuracy[0] > golden_accuracy){
+                    golden_accuracy = population_accuracy[0];
+                    memcpy(golden_tree, trees_population[0], sizeof(tree_data));
+                }
 
                 for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
                     iteration_accuracy[accuracy_i] = 0;
@@ -277,7 +277,7 @@ int main() {
         }
 
 
-        printf("Noise %f, stucked generations %i\n", noise_factor, stucked_gen);
+        printf("Mutation_factor %f, stucked generations %i\n", mutation_factor, stucked_gen);
         printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
         printf("golden_gen_ite %i\n", golden_gen_ite);
         printf("Execution time inference %f, reorganize_population %f,"
@@ -285,6 +285,7 @@ int main() {
                                     ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
     }
 
+    printf("Final evaluation !!!!\n\n");
     evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
     return 0;
 
