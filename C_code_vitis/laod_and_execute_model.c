@@ -195,7 +195,7 @@ int main() {
     srand(clock());
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
-    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/diabetes.csv";
+    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/Heart_Attack.csv";
 
     printf("Training model %s\n", path);
     int n_features;
@@ -246,9 +246,9 @@ int main() {
         mutation_factor = 0;
         iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] = population_accuracy[0];
         for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
-            if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] == iteration_accuracy[accuracy_i]){
+            if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE]-0.01 <= iteration_accuracy[accuracy_i]){
                 if ((generation_ite % MEMORY_ACU_SIZE) != accuracy_i){
-                    mutation_factor += 0.03;
+                    mutation_factor += 0.01;
                 }
             }
         }
