@@ -124,7 +124,7 @@ void tune_nodes(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
                  uint8_t n_features, float mutation_rate, 
                  uint32_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE], int *seed) {
 
-    uint32_t mutation_threshold = (mutation_rate*3) * RAND_MAX;
+    uint32_t mutation_threshold = mutation_rate * RAND_MAX;
     uint8_t n_feature;
     memcpy(output_tree, input_tree, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
     
@@ -187,7 +187,7 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
         memcpy(local_tree, trees_population[index_elite], sizeof(local_tree));
         if (population_accuracy[p] > 0.8){
             tune_nodes(local_tree, trees_population[p], n_features,
-                        1 - population_accuracy[p] + mutation_factor,
+                        1 - population_accuracy[p]*2 + mutation_factor*5,
                         N_TREES, max_features, min_features, &seed);
         }else{
             mutate_trees(local_tree, trees_population[p], n_features,
