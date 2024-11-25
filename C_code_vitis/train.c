@@ -162,7 +162,7 @@ void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
 
 void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]){
 
-    for (uint32_t p = POPULATION/20; p < (POPULATION/20 + POPULATION/20); p++){
+    for (uint32_t p = POPULATION - POPULATION/10; p < POPULATION; p++){
         int index_mother = rand() % (POPULATION/80);
         int index_father = rand() % (POPULATION/80) + POPULATION/80;
 
@@ -179,7 +179,7 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
     printf("Número de hilos: %d\n", omp_get_max_threads());
 
     #pragma omp parallel for schedule(static)
-    for (uint32_t p = POPULATION / 10; p < POPULATION; p++) {
+    for (uint32_t p = POPULATION / 80; p < POPULATION; p++) {
         unsigned int seed = omp_get_thread_num() + time(NULL) + p;
         int index_elite = rand_r(&seed) % (POPULATION / 10);
 
