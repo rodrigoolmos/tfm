@@ -240,9 +240,66 @@ void quicksort(float population_accuracy[POPULATION],
     }
 }
 
+void randomize_percent(float population_accuracy[POPULATION], 
+                          tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS],
+                          float percentage_randomize) {
+    int N = POPULATION;
+    int M = N * percentage_randomize;  // Número de elementos a aleatorizar
+    if (M < 1) M = 1;  // Asegurar al menos un elemento
+
+    // Crear una lista de índices excluyendo el primer individuo
+    int indices[N - 1];
+    for (int i = 1; i < N; i++) {
+        indices[i - 1] = i;
+    }
+
+    // Mezclar los índices para una selección aleatoria
+    for (int i = N - 2; i > 0; i--) {
+        int j = rand() % (i + 1);  // Número aleatorio entre 0 e i
+        // Intercambiar indices[i] y indices[j]
+        int temp = indices[i];
+        indices[i] = indices[j];
+        indices[j] = temp;
+    }
+
+    // Los primeros M índices son nuestra selección aleatoria
+    // Extraer los elementos seleccionados
+    float selected_accuracy[M];
+    tree_data selected_trees[M][N_TREES][N_NODE_AND_LEAFS];
+
+    for (int i = 0; i < M; i++) {
+        int idx = indices[i];
+        selected_accuracy[i] = population_accuracy[idx];
+        memcpy(selected_trees[i], trees_population[idx], sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+    }
+
+    // Mezclar los elementos seleccionados
+    for (int i = M - 1; i > 0; i--) {
+        int j = rand() % (i + 1);  // Número aleatorio entre 0 e i
+        // Intercambiar accuracies
+        float temp_accuracy = selected_accuracy[i];
+        selected_accuracy[i] = selected_accuracy[j];
+        selected_accuracy[j] = temp_accuracy;
+
+        // Intercambiar árboles
+        tree_data temp_tree[N_TREES][N_NODE_AND_LEAFS];
+        memcpy(temp_tree, selected_trees[i], sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+        memcpy(selected_trees[i], selected_trees[j], sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+        memcpy(selected_trees[j], temp_tree, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+    }
+
+    // Colocar los elementos mezclados de vuelta en la población
+    for (int i = 0; i < M; i++) {
+        int idx = indices[i];
+        population_accuracy[idx] = selected_accuracy[i];
+        memcpy(trees_population[idx], selected_trees[i], sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+    }
+}
+
 void reorganize_population(float population_accuracy[POPULATION], 
                     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]) {
     quicksort(population_accuracy, trees_population, 0, POPULATION - 1);
+    randomize_percent(population_accuracy, trees_population, 0.25);
 }
 
 void find_max_min_features(struct feature features[MAX_TEST_SAMPLES],
