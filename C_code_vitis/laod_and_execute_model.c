@@ -212,7 +212,7 @@ int main() {
 
     while(1){
         
-        if (!(generation_ite % 20)){
+        if (!(generation_ite % 5)){
             shuffle(features, read_samples* 80/100);
         }
 
