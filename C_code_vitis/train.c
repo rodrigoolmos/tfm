@@ -61,10 +61,15 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
             seed = seed + omp_get_thread_num() + time(NULL) + tree_i + node_i;
             trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, &seed);
             n_feature = trees[tree_i][node_i].tree_camps.feature_index;
+            
             trees[tree_i][node_i].tree_camps.leaf_or_node = 
                    (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(60, &seed);
 
-            if (trees[tree_i][node_i].tree_camps.leaf_or_node  == 0){
+            if (node_i < 4){
+                trees[tree_i][node_i].tree_camps.leaf_or_node = 1;
+            }
+
+            if (trees[tree_i][node_i].tree_camps.leaf_or_node == 0){
                 trees[tree_i][node_i].tree_camps.float_int_union.i =
                     generate_leaf_value(&seed);
             }else{
@@ -93,10 +98,12 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
             for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
                 *seed = *seed + node_i;
                 output_tree[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, seed);
+                n_feature = output_tree[tree_i][node_i].tree_camps.feature_index;
                 output_tree[tree_i][node_i].tree_camps.leaf_or_node =  
                     (right_index[node_i] == 0) ? 0x00 : generate_leaf_node(60, seed);
-
-                n_feature = output_tree[tree_i][node_i].tree_camps.feature_index;
+                if (node_i < 4){
+                    output_tree[tree_i][node_i].tree_camps.leaf_or_node = 1;
+                }
 
                 if (output_tree[tree_i][node_i].tree_camps.leaf_or_node == 0){
                     output_tree[tree_i][node_i].tree_camps.float_int_union.i =
@@ -107,6 +114,33 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
                 }
 
                 output_tree[tree_i][node_i].tree_camps.next_node_right_index = right_index[node_i];
+            }
+        }
+    }
+}
+
+void tune_nodes(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS], 
+                 tree_data output_tree[N_TREES][N_NODE_AND_LEAFS],
+                 uint8_t n_features, float mutation_rate, 
+                 uint32_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE], int *seed) {
+
+    uint32_t mutation_threshold = mutation_rate * RAND_MAX;
+    uint8_t n_feature;
+    memcpy(output_tree, input_tree, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+    
+    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
+        *seed = *seed + tree_i;
+        uint32_t mutation_value = rand_r(seed);
+        if (mutation_value < mutation_threshold){
+            for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
+                *seed = *seed + node_i;
+
+                n_feature = output_tree[tree_i][node_i].tree_camps.feature_index;
+
+                if (output_tree[tree_i][node_i].tree_camps.leaf_or_node){
+                    output_tree[tree_i][node_i].tree_camps.float_int_union.f +=
+                        generate_threshold(min_features[n_feature]/100, max_features[n_feature]/100, seed);
+                }
             }
         }
     }
@@ -151,10 +185,16 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
 
         tree_data local_tree[N_TREES][N_NODE_AND_LEAFS];
         memcpy(local_tree, trees_population[index_elite], sizeof(local_tree));
+        if (population_accuracy[p] > 0.8){
+            tune_nodes(local_tree, trees_population[p], n_features,
+                        1 - (population_accuracy[p] + mutation_factor),
+                        N_TREES, max_features, min_features, &seed);
+        }else{
+            mutate_trees(local_tree, trees_population[p], n_features,
+                        1 - (population_accuracy[p] + mutation_factor),
+                        N_TREES, max_features, min_features, &seed);
+        }
         
-        mutate_trees(local_tree, trees_population[p], n_features,
-                    1 - (population_accuracy[p] + mutation_factor),
-                    N_TREES, max_features, min_features, &seed);
     }
 }
 
