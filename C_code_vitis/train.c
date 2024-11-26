@@ -139,7 +139,7 @@ void tune_nodes(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
 
                 if (output_tree[tree_i][node_i].tree_camps.leaf_or_node){
                     output_tree[tree_i][node_i].tree_camps.float_int_union.f +=
-                        generate_threshold(min_features[n_feature]/100, max_features[n_feature]/100, seed);
+                        generate_threshold(min_features[n_feature]/10, max_features[n_feature]/10, seed);
                 }
             }
         }
@@ -179,15 +179,16 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
     printf("Número de hilos: %d\n", omp_get_max_threads());
 
     #pragma omp parallel for schedule(static)
-    for (uint32_t p = POPULATION / 40; p < POPULATION; p++) {
+    for (uint32_t p = POPULATION/2; p < POPULATION; p++) {
         unsigned int seed = omp_get_thread_num() + time(NULL) + p;
-        int index_elite = rand_r(&seed) % (POPULATION / 10);
+        int index_elite = rand_r(&seed) % (POPULATION/2);
 
         tree_data local_tree[N_TREES][N_NODE_AND_LEAFS];
         memcpy(local_tree, trees_population[index_elite], sizeof(local_tree));
-        if (population_accuracy[p] > 0.8){
+        int threshold = (int)((POPULATION/8)* population_accuracy[index_elite]);
+        if (index_elite < threshold){
             tune_nodes(local_tree, trees_population[p], n_features,
-                        (1 - population_accuracy[p])*2 + mutation_factor*5,
+                        1 - population_accuracy[p] + mutation_factor*5,
                         N_TREES, max_features, min_features, &seed);
         }else{
             mutate_trees(local_tree, trees_population[p], n_features,

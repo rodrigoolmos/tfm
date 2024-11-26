@@ -67,6 +67,59 @@ int read_n_features(const char *csv_file, int n, struct feature *features, int *
     return features_read;
 }
 
+int augment_features(const struct feature *original_features, int n_features, int n_col,
+                     float max_features[N_FEATURE], float min_features[N_FEATURE],
+                     struct feature *augmented_features, int max_augmented_features, 
+                     int augmentation_factor) {
+
+    int total_augmented = 0;
+    int i, j, k;
+    int seed;
+    float noise_level = 0.05f;  // Nivel de ruido (ajustable según necesidad)
+
+    // Semilla para el generador de números aleatorios
+    srand((unsigned int)time(NULL));
+
+    for (i = 0; i < n_features; i++) {
+        // Verificar si hay espacio en augmented_features
+        if (total_augmented >= max_augmented_features) {
+            break;
+        }
+
+        // Copiar la muestra original al arreglo de aumentados
+        augmented_features[total_augmented] = original_features[i];
+        total_augmented++;
+
+        // Generar muestras aumentadas
+        for (j = 0; j < augmentation_factor; j++) {
+            if (total_augmented >= max_augmented_features) {
+                break;
+            }
+
+            struct feature new_feature = original_features[i];
+
+            // Agregar ruido aleatorio a cada característica
+            for (k = 0; k < n_col && k < N_FEATURE; k++) {
+                seed = i*n_col*augmentation_factor + j*n_col + k;
+                if (!(min_features == 0 && max_features == 0)){
+                    float noise = generate_random_float(min_features[k]/10, max_features[k]/10, &seed);
+                    new_feature.features[k] += noise;
+                }
+                
+            }
+
+            // Mantener la misma predicción
+            new_feature.prediction = original_features[i].prediction;
+
+            // Agregar la nueva muestra al arreglo de aumentados
+            augmented_features[total_augmented] = new_feature;
+            total_augmented++;
+        }
+    }
+
+    return total_augmented;
+}
+
 void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS], 
                     struct feature *features, int read_samples, 
                     float *accuracy, uint8_t sow_log){
@@ -190,35 +243,38 @@ int main() {
     float min_features[N_FEATURE];
     
     struct feature features[MAX_TEST_SAMPLES];
+    struct feature features_augmented[MAX_TEST_SAMPLES*10];
     int read_samples;
     int generation_ite = 0;
     srand(clock());
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
-    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/Heart_Attack.csv";
+    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/diabetes.csv";
 
     printf("Training model %s\n", path);
     int n_features;
     read_samples = read_n_features(path, MAX_TEST_SAMPLES, features, &n_features);
     n_features--; // remove predictions
 
-    
     shuffle(features, read_samples);
-
     find_max_min_features(features, max_features, min_features);
+    read_samples = augment_features(features, read_samples, n_features, 
+                                    max_features, min_features, features_augmented,
+                                    MAX_TEST_SAMPLES*10, 1);
+    shuffle(features_augmented, read_samples);
 
     for (uint32_t p = 0; p < POPULATION; p++)
         generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
 
     while(1){
         
-        if (!(generation_ite % 20)){
-            shuffle(features, read_samples* 80/100);
+        if (!(generation_ite % 50)){
+            shuffle(features_augmented, read_samples* 80/100);
         }
 
         clock_t t1 = clock();
         for (uint32_t p = 0; p < POPULATION; p++)
-            execute_model(trees_population[p], features, read_samples * 50/100, &population_accuracy[p], 0);
+            execute_model(trees_population[p], features_augmented, read_samples * 50/100, &population_accuracy[p], 0);
         clock_t t2 = clock();
 
         reorganize_population(population_accuracy, trees_population);
@@ -229,7 +285,7 @@ int main() {
         show_logs(population_accuracy);
 
         // evaluation features from out the training dataset
-        evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
+        evaluate_model(trees_population[0], &features_augmented[read_samples * 80/100], read_samples * 20/100);
         /////////////////////////////////////////////////////////////////////
 
         if(population_accuracy[0] >= 1){
@@ -248,7 +304,7 @@ int main() {
         for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
             if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE]-0.01 <= iteration_accuracy[accuracy_i]){
                 if ((generation_ite % MEMORY_ACU_SIZE) != accuracy_i){
-                    mutation_factor += 0.01;
+                    mutation_factor += 0.03;
                 }
             }
         }
@@ -261,7 +317,7 @@ int main() {
     }
 
     printf("Final evaluation !!!!\n\n");
-    evaluate_model(trees_population[0], &features[read_samples * 80/100], read_samples * 20/100);
+    evaluate_model(trees_population[0], &features_augmented[read_samples * 80/100], read_samples * 20/100);
     return 0;
 
 }

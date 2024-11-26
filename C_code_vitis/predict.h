@@ -37,6 +37,8 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
             int32_t *features_burst_length,
 			int32_t ping_pong);
 
+float generate_random_float(float min, float max, int* seed);
+
 void find_max_min_features(struct feature features[MAX_TEST_SAMPLES],
                                 float max_features[N_FEATURE], float min_features[N_FEATURE]);
 
