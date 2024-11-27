@@ -248,8 +248,10 @@ int main() {
     int generation_ite = 0;
     srand(clock());
 
-    tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS];
-    char *path ="/home/rodrigo/Documents/tfm/datasets/SoA/paper1/diabetes.csv";
+    tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS] = {0};
+    tree_data golden_tree[N_TREES_IP][N_NODE_AND_LEAFS] = {0};
+
+    char *path ="/home/rodrigo/tfm/datasets/SoA/paper1/haberman.csv";
 
     printf("Training model %s\n", path);
     int n_features;
@@ -260,67 +262,78 @@ int main() {
     find_max_min_features(features, max_features, min_features);
     read_samples = augment_features(features, read_samples, n_features, 
                                     max_features, min_features, features_augmented,
-                                    MAX_TEST_SAMPLES*10, 1);
-    shuffle(features_augmented, read_samples);
+                                    MAX_TEST_SAMPLES*10, 2);
+    for (size_t bagging_i = 0; bagging_i < N_BAGGING; bagging_i++){
+        generation_ite = 0;
+        shuffle(features_augmented, read_samples);
 
-    for (uint32_t p = 0; p < POPULATION; p++)
-        generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
-
-    while(1){
-        
-        if (!(generation_ite % 50)){
-            shuffle(features_augmented, read_samples* 80/100);
-            for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
-                iteration_accuracy[accuracy_i] = 0;
-            }
-        }
-
-        clock_t t1 = clock();
         for (uint32_t p = 0; p < POPULATION; p++)
-            execute_model(trees_population[p], features_augmented, read_samples * 50/100, &population_accuracy[p], 0);
-        clock_t t2 = clock();
+            generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
 
-        reorganize_population(population_accuracy, trees_population);
-        clock_t t3 = clock();
-
-        /////////////////////////////// tests ///////////////////////////////
-
-        show_logs(population_accuracy);
-
-        // evaluation features from out the training dataset
-        evaluate_model(trees_population[0], &features_augmented[read_samples * 80/100], read_samples * 20/100);
-        /////////////////////////////////////////////////////////////////////
-
-        if(population_accuracy[0] >= 1){
-            break;
-        }
-
-        mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, mutation_factor);
-
-        clock_t t4 = clock();
-        crossover(trees_population);
-        clock_t t5 = clock();
-
-        generation_ite ++;
-        mutation_factor = 0;
-        iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] = population_accuracy[0];
-        for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
-            if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] <= iteration_accuracy[accuracy_i]){
-                if ((generation_ite % MEMORY_ACU_SIZE) != accuracy_i){
-                    mutation_factor += 0.02;
+        while(1){
+            
+            if (!(generation_ite % 50)){
+                shuffle(features_augmented, read_samples* 80/100);
+                for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
+                    iteration_accuracy[accuracy_i] = 0;
                 }
             }
+
+            clock_t t1 = clock();
+            for (uint32_t p = 0; p < POPULATION; p++)
+            execute_model(trees_population[p], features_augmented, read_samples * 50/100, &population_accuracy[p], 0);
+            clock_t t2 = clock();
+
+            reorganize_population(population_accuracy, trees_population);
+            clock_t t3 = clock();
+
+            /////////////////////////////// tests ///////////////////////////////
+
+            show_logs(population_accuracy);
+
+            // evaluation features from out the training dataset
+            printf("Bagging !!!!\n");
+            evaluate_model(trees_population[0], &features_augmented[read_samples * 80/100], read_samples * 20/100);
+            printf("Model !!!!\n");
+            evaluate_model(golden_tree, &features_augmented[read_samples * 80/100], read_samples * 20/100);
+            /////////////////////////////////////////////////////////////////////
+
+            if(population_accuracy[0] >= 1 || generation_ite > 500){
+                break;
+            }
+
+            mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, mutation_factor);
+
+            clock_t t4 = clock();
+            crossover(trees_population);
+            clock_t t5 = clock();
+
+            generation_ite ++;
+            mutation_factor = 0;
+            iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] = population_accuracy[0];
+            for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
+                if(iteration_accuracy[generation_ite % MEMORY_ACU_SIZE] <= iteration_accuracy[accuracy_i]){
+                    if ((generation_ite % MEMORY_ACU_SIZE) != accuracy_i){
+                        mutation_factor += 0.02;
+                    }
+                }
+            }
+
+            printf("Mutation_factor %f\n", mutation_factor);
+            printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
+            printf("Execution time inference %f, reorganize_population %f,"
+                                        "mutate_population %f, crossover %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
+                                        ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
         }
 
-        printf("Mutation_factor %f\n", mutation_factor);
-        printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
-        printf("Execution time inference %f, reorganize_population %f,"
-                                    "mutate_population %f, crossover %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
-                                    ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
+        for (uint32_t tree_i = 0; tree_i < N_TREES; tree_i++){
+            memcpy(golden_tree[bagging_i*N_TREES + tree_i], trees_population[0][tree_i], sizeof(tree_data) * N_NODE_AND_LEAFS);
+        }
     }
+    
 
     printf("Final evaluation !!!!\n\n");
-    evaluate_model(trees_population[0], &features_augmented[read_samples * 80/100], read_samples * 20/100);
+    evaluate_model(golden_tree, &features_augmented[read_samples * 80/100], read_samples * 20/100);
     return 0;
 
 }

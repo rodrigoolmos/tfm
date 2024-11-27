@@ -1,6 +1,6 @@
 #include "predict.h"
 
-void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
+void predict(uint64_t tree[N_TREES_IP][N_NODE_AND_LEAFS],
             float bram_features_ping[MAX_BURST_FEATURES][N_FEATURE],
             float bram_features_pong[MAX_BURST_FEATURES][N_FEATURE], 
             int32_t prediction_ping[MAX_BURST_FEATURES],
@@ -22,7 +22,7 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
 	#pragma HLS INTERFACE mode=s_axilite port=features_burst_length bundle=control
 	#pragma HLS INTERFACE mode=s_axilite port=ping_pong bundle=control
 	#pragma HLS INTERFACE s_axilite port=return bundle=control
-	#pragma HLS ARRAY_PARTITION dim=1 factor=N_TREES type=block variable=tree
+	#pragma HLS ARRAY_PARTITION dim=1 factor=N_TREES_IP type=block variable=tree
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=local_features_ping
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=local_features_pong
 
@@ -43,8 +43,8 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
 
         if (local_ping_pong){
 
-            trees_loop_ping: for (int t = 0; t < N_TREES; t++){
-            #pragma HLS UNROLL factor=N_TREES
+            trees_loop_ping: for (int t = 0; t < N_TREES_IP && t < N_TREES; t++){
+            #pragma HLS UNROLL factor=N_TREES_IP
 
                 uint8_t node_index = 0;
                 uint8_t node_right;
@@ -77,8 +77,8 @@ void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
 
         }else{
 
-            trees_loop_pong: for (int t = 0; t < N_TREES; t++){
-            #pragma HLS UNROLL factor=N_TREES
+            trees_loop_pong: for (int t = 0; t < N_TREES_IP && t < N_TREES; t++){
+            #pragma HLS UNROLL factor=N_TREES_IP
                 uint8_t node_index = 0;
                 uint8_t node_right;
                 uint8_t node_left;
