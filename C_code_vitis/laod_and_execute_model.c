@@ -128,13 +128,17 @@ void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
     int32_t prediction;
     uint32_t trees_score = 0;
     int32_t burst_size = 1;
+    int32_t new_model = 1;
+    int32_t trees_used = N_TREES;
+
+
     float features_burst[N_FEATURE];
 
     int ceil_div = (read_samples + MAX_BURST_FEATURES - 1) / MAX_BURST_FEATURES;
 
     for (int i = 0; i < read_samples; i++){
         memcpy(features_burst, features[i].features, sizeof(float) * N_FEATURE);  
-        predict(tree, NULL, features_burst, NULL, &prediction, &burst_size, 0);
+        predict(tree, NULL, features_burst, NULL, &prediction, &burst_size, &new_model, &trees_used, 0);
         if (features[i].prediction == (prediction > 0)){
             trees_score += abs(prediction);
             correct++;
@@ -159,6 +163,8 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
     int32_t burst_size = MAX_BURST_FEATURES;
     clock_t start_time, end_time;
     double cpu_time_used;
+    int32_t new_model = 1;
+    int32_t trees_used = N_TREES_IP;
     start_time = clock();
 
     int ceil_div = (read_samples + MAX_BURST_FEATURES - 1) / MAX_BURST_FEATURES;
@@ -175,7 +181,7 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
                 memcpy(features_burst[j], features[i * MAX_BURST_FEATURES + j].features, sizeof(float) *N_FEATURE);
         }
         
-        predict(tree, NULL, features_burst, NULL, prediction, &burst_size, 0);
+        predict(tree, NULL, features_burst, NULL, prediction, &burst_size, &new_model, &trees_used, 0);
 
         for (int j = 0; j < burst_size; j++){
             if (features[i * MAX_BURST_FEATURES + j].prediction == (prediction[j] > 0)){
@@ -206,7 +212,7 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
                 memcpy(features_burst[j], features[i * MAX_BURST_FEATURES + j].features, sizeof(float) *N_FEATURE);
         }
         
-        predict(tree, features_burst, NULL, prediction, NULL, &burst_size, 1);
+        predict(tree, features_burst, NULL, prediction, NULL, &burst_size, &new_model, &trees_used, 1);
 
         for (int j = 0; j < burst_size; j++){
             if (features[i * MAX_BURST_FEATURES + j].prediction == (prediction[j] > 0)){
@@ -251,7 +257,7 @@ int main() {
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS] = {0};
     tree_data golden_tree[N_TREES_IP][N_NODE_AND_LEAFS] = {0};
 
-    char *path ="/home/rodrigo/tfm/datasets/SoA/paper1/haberman.csv";
+    char *path ="/home/rodrigo/tfm/datasets/kaggle/alzheimers_processed_dataset.csv";
 
     printf("Training model %s\n", path);
     int n_features;
@@ -262,7 +268,7 @@ int main() {
     find_max_min_features(features, max_features, min_features);
     read_samples = augment_features(features, read_samples, n_features, 
                                     max_features, min_features, features_augmented,
-                                    MAX_TEST_SAMPLES*10, 2);
+                                    MAX_TEST_SAMPLES*10, 0);
     for (size_t bagging_i = 0; bagging_i < N_BAGGING; bagging_i++){
         generation_ite = 0;
         shuffle(features_augmented, read_samples);
@@ -281,7 +287,7 @@ int main() {
 
             clock_t t1 = clock();
             for (uint32_t p = 0; p < POPULATION; p++)
-            execute_model(trees_population[p], features_augmented, read_samples * 50/100, &population_accuracy[p], 0);
+                execute_model(trees_population[p], features_augmented, read_samples * 50/100, &population_accuracy[p], 0);
             clock_t t2 = clock();
 
             reorganize_population(population_accuracy, trees_population);

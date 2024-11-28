@@ -1,17 +1,20 @@
 #include "predict.h"
 
-void predict(uint64_t tree[N_TREES_IP][N_NODE_AND_LEAFS],
+void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
             float bram_features_ping[MAX_BURST_FEATURES][N_FEATURE],
             float bram_features_pong[MAX_BURST_FEATURES][N_FEATURE], 
             int32_t prediction_ping[MAX_BURST_FEATURES],
             int32_t prediction_pong[MAX_BURST_FEATURES], 
             int32_t *features_burst_length,
+            int32_t *load_trees,
+            int32_t *trees_used,
             int32_t ping_pong){
 
     int32_t leaf_value;
     static int8_t local_ping_pong;
     float local_features_ping[N_FEATURE];
     float local_features_pong[N_FEATURE];
+    static uint64_t tree[N_TREES_IP][N_NODE_AND_LEAFS];
 
 	#pragma HLS TOP name=predict
 	#pragma HLS INTERFACE mode=bram port=prediction_ping
@@ -35,7 +38,16 @@ void predict(uint64_t tree[N_TREES_IP][N_NODE_AND_LEAFS],
             local_features_ping[i] = ping_pong & 0x01 ? bram_features_ping[0][i] : bram_features_pong[0][i];
         }
     }
-    
+
+     if (*load_trees&0x01){
+        for (uint32_t t_index = 0; t_index < *trees_used; t_index++){
+            for (uint32_t n_index = 0; n_index < N_NODE_AND_LEAFS; n_index++){
+                tree[t_index][n_index] = bram_tree[t_index][n_index];
+            }
+        }
+        *load_trees = 0x02;
+    }
+
     burst_loop:for (int j = 0; j < *features_burst_length; j++){
 	#pragma HLS loop_tripcount min=1 max=MAX_BURST_FEATURES
 
@@ -43,7 +55,7 @@ void predict(uint64_t tree[N_TREES_IP][N_NODE_AND_LEAFS],
 
         if (local_ping_pong){
 
-            trees_loop_ping: for (int t = 0; t < N_TREES_IP && t < N_TREES; t++){
+            trees_loop_ping: for (int t = 0; t < N_TREES_IP && t < *trees_used; t++){
             #pragma HLS UNROLL factor=N_TREES_IP
 
                 uint8_t node_index = 0;
@@ -77,7 +89,7 @@ void predict(uint64_t tree[N_TREES_IP][N_NODE_AND_LEAFS],
 
         }else{
 
-            trees_loop_pong: for (int t = 0; t < N_TREES_IP && t < N_TREES; t++){
+            trees_loop_pong: for (int t = 0; t < N_TREES_IP && t < *trees_used; t++){
             #pragma HLS UNROLL factor=N_TREES_IP
                 uint8_t node_index = 0;
                 uint8_t node_right;

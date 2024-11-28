@@ -32,13 +32,15 @@ typedef union {
     uint64_t compact_data;
 } tree_data;
 
-void predict(uint64_t tree[N_TREES][N_NODE_AND_LEAFS],
+void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
             float bram_features_ping[MAX_BURST_FEATURES][N_FEATURE],
             float bram_features_pong[MAX_BURST_FEATURES][N_FEATURE], 
             int32_t prediction_ping[MAX_BURST_FEATURES],
             int32_t prediction_pong[MAX_BURST_FEATURES], 
             int32_t *features_burst_length,
-			int32_t ping_pong);
+            int32_t *load_trees,
+            int32_t *trees_used,
+            int32_t ping_pong);
 
 float generate_random_float(float min, float max, int* seed);
 
