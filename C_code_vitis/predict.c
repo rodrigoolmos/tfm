@@ -21,9 +21,11 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
 	#pragma HLS INTERFACE mode=bram port=prediction_pong
 	#pragma HLS INTERFACE mode=bram port=bram_features_ping
 	#pragma HLS INTERFACE mode=bram port=bram_features_pong
-	#pragma HLS INTERFACE mode=s_axilite port=tree bundle=tree
+	#pragma HLS INTERFACE mode=bram port=bram_tree
 	#pragma HLS INTERFACE mode=s_axilite port=features_burst_length bundle=control
 	#pragma HLS INTERFACE mode=s_axilite port=ping_pong bundle=control
+	#pragma HLS INTERFACE mode=s_axilite port=load_trees bundle=control
+	#pragma HLS INTERFACE mode=s_axilite port=trees_used bundle=control
 	#pragma HLS INTERFACE s_axilite port=return bundle=control
 	#pragma HLS ARRAY_PARTITION dim=1 factor=N_TREES_IP type=block variable=tree
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=local_features_ping
