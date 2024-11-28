@@ -71,13 +71,33 @@ void read_prediction_ping_pong(int fd_user, int fd_c2h, int32_t* predictions, ui
     }
 }
 
+void load_trees_from_ram(int fd_user){
+    
+    uint32_t data = 0x01;
 
-void send_trees(int fd_h2c, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS]){
+    if (pwrite(fd_user, &data, 4, LOAD_TREES_ADDR_I) == -1) {
+        perror("pwrite");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void set_trees_used(int fd_user, uint32_t *n_trees){
+    
+    if (pwrite(fd_user, n_trees, 4, TREES_USED_ADDR) == -1) {
+        perror("pwrite");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void send_trees(int fd_user, int fd_h2c, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS], uint32_t *n_trees){
 
     int i;
     uint64_t offset;
+    
+    set_trees_used(fd_user, n_trees);
+    load_trees_from_ram(fd_user);
 
-    for (i = 0; i < N_TREES; i++){
+    for (i = 0; i < *n_trees; i++){
         offset =  N_NODE_AND_LEAFS * sizeof(uint64_t) * i;
         write_burst(fd_h2c, TREES_ADDR + offset, tree_data[i], N_NODE_AND_LEAFS * sizeof(uint64_t));
     }
@@ -101,8 +121,6 @@ void start_prediction(int fd_user){
         perror("pwrite");
         exit(EXIT_FAILURE);
     }
-
-
 }
 
 void start_prediction_ping_pong(int fd_user, uint32_t ping_pong, uint32_t burst_len){
@@ -168,13 +186,12 @@ void burst_ping_pong_process(int fd_user, int fd_h2c, int fd_c2h,
 
 void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS],
                     int fd_user, struct feature features[MAX_TEST_SAMPLES], uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE],
-                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples, float* time_execution){
+                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples, float* time_execution, uint32_t *n_trees){
     clock_t start_time, end_time;
     double cpu_time_used;
     int i, correct = 0;
 
-
-    send_trees(fd_h2c, tree_data);
+    send_trees(fd_user, fd_h2c, tree_data, n_trees);
 
     start_time = clock();
     burst_ping_pong_process(fd_user, fd_h2c, fd_c2h, raw_features, read_samples, inference);

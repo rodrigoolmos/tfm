@@ -1,7 +1,5 @@
 #include "../common/common.h"
 
-#define MAP_SIZE 0x20000
-
 #define PING 0xffffffff
 #define PONG 0x00000000
 
@@ -9,13 +7,16 @@
 #define FEATURES_PONG_ADDR 0xC2000000
 #define PREDICTIONS_PING_ADDR 0xC4000000
 #define PREDICTIONS_PONG_ADDR 0xC6000000
-
-#define TREES_ADDR 0x00800
+#define TREES_ADDR 0xC8000000
 
 #define CONTROL_ADDR_BASE 0x0
 #define CONTROL_ADDR CONTROL_ADDR_BASE + 0
 #define BURST_LENGTH_ADDR CONTROL_ADDR_BASE + 0x10
-#define PING_PONG_ADDR CONTROL_ADDR_BASE + 0x18
+#define LOAD_TREES_ADDR_I CONTROL_ADDR_BASE + 0x18
+#define LOAD_TREES_ADDR_O CONTROL_ADDR_BASE + 0x20
+#define LOAD_TREES_ADDR_CTRL CONTROL_ADDR_BASE + 0x24
+#define TREES_USED_ADDR CONTROL_ADDR_BASE + 0x28
+#define PING_PONG_ADDR CONTROL_ADDR_BASE + 0x30
 
 #define MAX_BURST 256
 
@@ -30,10 +31,11 @@
  * @param raw_features  Matrix with the raw feature data.
  * @param inference     Results of the inferences performed by the model.
  * @param read_samples  Number of feature sets to process.
+ * @param n_trees       N trees desired to be executed by the model.
  */
 void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS],
                     int fd_user, struct feature features[MAX_TEST_SAMPLES], uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE],
-                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples, float* time_execution);
+                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples, float* time_execution, uint32_t *n_trees);
                     
 /**
  * @brief Loads a CSV file into the features structure and the matrix of raw features.
@@ -64,3 +66,7 @@ void load_features(const char* filename, int max_test_samples, struct feature* f
  */
 void burst_ping_pong_process(int fd_user, int fd_h2c, int fd_c2h, 
                     uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE], int32_t n_features_total, int32_t* inference);
+
+
+
+void send_trees(int fd_user, int fd_h2c, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS], uint32_t *n_trees);
