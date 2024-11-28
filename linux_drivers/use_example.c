@@ -46,7 +46,7 @@ int main() {
     load_model(tree_data, "../trained_models/heart_attack.model");
     evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features, inference, read_samples, &time_ex, &n_trees);
 
-    load_features("../datasets/kaggle/lung_cancer.csv", MAX_TEST_SAMPLES, features, raw_features, &features_length, &read_samples);
+    load_features("../datasets/kaggle/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features, raw_features, &features_length, &read_samples);
     load_model(tree_data, "../trained_models/lung_cancer.model");
     evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features, inference, read_samples, &time_ex, &n_trees);
 
