@@ -143,6 +143,7 @@ void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
             trees_score += abs(prediction);
             correct++;
         }
+        new_model = 0;
     }
 
     *accuracy = (float) correct / read_samples;
@@ -189,6 +190,7 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
             }
             evaluated++;
         }
+        new_model = 0;
     }
     //printf("PONG!!!!!!\n");
     printf("Accuracy real %f evaluates samples %i of %i\n", 1.0 * accuracy / read_samples, evaluated, read_samples);
@@ -220,6 +222,7 @@ void evaluate_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
             }
             evaluated++;
         }
+        new_model = 0;
     }
     // printf("PING!!!!!!\n");
     // printf("Accuracy %f evaluates samples %i of %i\n", 1.0 * accuracy / read_samples, evaluated, read_samples);
@@ -257,7 +260,7 @@ int main() {
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS] = {0};
     tree_data golden_tree[N_TREES_IP][N_NODE_AND_LEAFS] = {0};
 
-    char *path ="/home/rodrigo/tfm/datasets/kaggle/alzheimers_processed_dataset.csv";
+    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/alzheimers_processed_dataset.csv";
 
     printf("Training model %s\n", path);
     int n_features;

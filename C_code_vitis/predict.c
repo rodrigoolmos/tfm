@@ -47,7 +47,6 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
                 tree[t_index][n_index] = bram_tree[t_index][n_index];
             }
         }
-        *load_trees = 0x02;
     }
 
     burst_loop:for (int j = 0; j < *features_burst_length; j++){
