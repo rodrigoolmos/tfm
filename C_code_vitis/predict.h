@@ -4,7 +4,7 @@
 
 #define N_NODE_AND_LEAFS 256            // Adjust according to the maximum number of nodes and leaves in your trees
 #define N_TREES_IP 128                  // Adjust according to the number of trees in your model
-#define N_TREES N_TREES_IP / N_BAGGING  // Adjust according to the number of trees in your model
+#define N_TREES N_TREES_IP / N_BAGGING
 #define N_FEATURE 32                    // Adjust according to the number of features in your model
 #define MAX_BURST_FEATURES 256          // Adjust according to the number burst features
 #define MAX_TEST_SAMPLES 30000
