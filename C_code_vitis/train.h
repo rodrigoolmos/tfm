@@ -24,3 +24,8 @@ void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]
 
 void reorganize_population(float population_accuracy[POPULATION], 
                     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]);
+
+int augment_features(const struct feature *original_features, int n_features, int n_col,
+                     float max_features[N_FEATURE], float min_features[N_FEATURE],
+                     struct feature *augmented_features, int max_augmented_features, 
+                     int augmentation_factor);

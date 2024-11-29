@@ -67,59 +67,6 @@ int read_n_features(const char *csv_file, int n, struct feature *features, int *
     return features_read;
 }
 
-int augment_features(const struct feature *original_features, int n_features, int n_col,
-                     float max_features[N_FEATURE], float min_features[N_FEATURE],
-                     struct feature *augmented_features, int max_augmented_features, 
-                     int augmentation_factor) {
-
-    int total_augmented = 0;
-    int i, j, k;
-    int seed;
-    float noise_level = 0.05f;  // Nivel de ruido (ajustable según necesidad)
-
-    // Semilla para el generador de números aleatorios
-    srand((unsigned int)time(NULL));
-
-    for (i = 0; i < n_features; i++) {
-        // Verificar si hay espacio en augmented_features
-        if (total_augmented >= max_augmented_features) {
-            break;
-        }
-
-        // Copiar la muestra original al arreglo de aumentados
-        augmented_features[total_augmented] = original_features[i];
-        total_augmented++;
-
-        // Generar muestras aumentadas
-        for (j = 0; j < augmentation_factor; j++) {
-            if (total_augmented >= max_augmented_features) {
-                break;
-            }
-
-            struct feature new_feature = original_features[i];
-
-            // Agregar ruido aleatorio a cada característica
-            for (k = 0; k < n_col && k < N_FEATURE; k++) {
-                seed = i*n_col*augmentation_factor + j*n_col + k;
-                if (!(min_features == 0 && max_features == 0)){
-                    float noise = generate_random_float(min_features[k]/10, max_features[k]/10, &seed);
-                    new_feature.features[k] += noise;
-                }
-                
-            }
-
-            // Mantener la misma predicción
-            new_feature.prediction = original_features[i].prediction;
-
-            // Agregar la nueva muestra al arreglo de aumentados
-            augmented_features[total_augmented] = new_feature;
-            total_augmented++;
-        }
-    }
-
-    return total_augmented;
-}
-
 void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS], 
                     struct feature *features, int read_samples, 
                     float *accuracy, uint8_t sow_log){
