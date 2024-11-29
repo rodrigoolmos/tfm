@@ -87,7 +87,8 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
                 sum += leaf_value;
             }
 
-            coppy_loop_pong:for (int i = 0; i < N_FEATURE & j < *features_burst_length - 1; i++)
+            coppy_loop_pong:for (int i = 0; i < N_FEATURE && j < *features_burst_length - 1; i++)
+			#pragma HLS loop_tripcount min=1 max=N_FEATURE
                 local_features_pong[i] = ping_pong & 0x01 ? bram_features_ping[j+1][i] : bram_features_pong[j+1][i];
 
         }else{
@@ -121,7 +122,8 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
                 sum += leaf_value;
             }
 
-            coppy_loop_ping:for (int i = 0; i < N_FEATURE & j < *features_burst_length - 1; i++)
+            coppy_loop_ping:for (int i = 0; i < N_FEATURE && j < *features_burst_length - 1; i++)
+			#pragma HLS loop_tripcount min=1 max=N_FEATURE
                 local_features_ping[i] = ping_pong & 0x01 ? bram_features_ping[j+1][i] : bram_features_pong[j+1][i];
 
         }
