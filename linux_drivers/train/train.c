@@ -391,7 +391,7 @@ int augment_features(const struct feature *original_features, int n_features, in
 
 void show_logs(float population_accuracy[POPULATION]){
 
-        for (int32_t p = POPULATION/10; p >= 0; p--){
+        for (int32_t p = POPULATION/100; p >= 0; p--){
             printf("RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f \t| RANKING %i -> %f| RANKING %i -> %f\n"
                             , p, population_accuracy[p]
                             , p + POPULATION/20, population_accuracy[p + POPULATION/20]
@@ -408,7 +408,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
     struct feature features[MAX_TEST_SAMPLES];
     float max_features[N_FEATURE];
     float min_features[N_FEATURE];
-    struct feature features_augmented[MAX_TEST_SAMPLES*10];
+    struct feature features_augmented[MAX_TEST_SAMPLES];
     int generation_ite = 0;
     tree_data trees_population[POPULATION][N_TREES_BAGGING][N_NODE_AND_LEAFS] = {0};
     float iteration_accuracy[MEMORY_ACU_SIZE] = {0};
@@ -429,7 +429,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
     find_max_min_features(features, max_features, min_features);
     read_samples = augment_features(features, read_samples, n_features, 
                                     max_features, min_features, features_augmented,
-                                    MAX_TEST_SAMPLES*10, 0);
+                                    MAX_TEST_SAMPLES, 9);
 
     ///////////////////////////// TRAIN MODEL //////////////////////////
 
