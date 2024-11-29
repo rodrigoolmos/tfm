@@ -81,6 +81,16 @@ void load_trees_from_ram(int fd_user){
     }
 }
 
+void dont_load_trees_from_ram(int fd_user){
+    
+    uint32_t data = 0x00;
+
+    if (pwrite(fd_user, &data, 4, LOAD_TREES_ADDR) == -1) {
+        perror("pwrite");
+        exit(EXIT_FAILURE);
+    }
+}
+
 void set_trees_used(int fd_user, uint32_t *n_trees_used){
     
     if (pwrite(fd_user, n_trees_used, 4, TREES_USED_ADDR) == -1) {
@@ -137,7 +147,7 @@ void start_prediction_ping_pong(int fd_user, uint32_t ping_pong, uint32_t burst_
         set_ping_pong(fd_user, PONG);
         start_prediction(fd_user);
     }
-    
+    dont_load_trees_from_ram(fd_user); // only load trees form ram when new trees are present
 
 }
 
