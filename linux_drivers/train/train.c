@@ -48,7 +48,7 @@ uint8_t generate_feture_index(uint8_t feature_length, int *seed) {
     return random_8;
 }
 
-void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS], 
+void generate_rando_trees(tree_data trees[N_TREES_BAGGING][N_NODE_AND_LEAFS], 
                     uint8_t n_features, uint16_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE]) {
 
     srand(clock());
@@ -56,7 +56,7 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
     int seed = trees;
 
     #pragma omp parallel for schedule(static)
-    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
+    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES_BAGGING; tree_i++){
         for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
             seed = seed + omp_get_thread_num() + time(NULL) + tree_i + node_i;
             trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, &seed);
@@ -82,16 +82,16 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
     }
 }
 
-void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS], 
-                 tree_data output_tree[N_TREES][N_NODE_AND_LEAFS],
+void mutate_trees(tree_data input_tree[N_TREES_BAGGING][N_NODE_AND_LEAFS], 
+                 tree_data output_tree[N_TREES_BAGGING][N_NODE_AND_LEAFS],
                  uint8_t n_features, float mutation_rate, 
                  uint32_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE], int *seed) {
 
     uint32_t mutation_threshold = mutation_rate * RAND_MAX;
     uint8_t n_feature;
-    memcpy(output_tree, input_tree, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+    memcpy(output_tree, input_tree, sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
     
-    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
+    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES_BAGGING; tree_i++){
         *seed = *seed + tree_i;
         uint32_t mutation_value = rand_r(seed);
         if (mutation_value < mutation_threshold){
@@ -119,16 +119,16 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
     }
 }
 
-void tune_nodes(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS], 
-                 tree_data output_tree[N_TREES][N_NODE_AND_LEAFS],
+void tune_nodes(tree_data input_tree[N_TREES_BAGGING][N_NODE_AND_LEAFS], 
+                 tree_data output_tree[N_TREES_BAGGING][N_NODE_AND_LEAFS],
                  uint8_t n_features, float mutation_rate, 
                  uint32_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE], int *seed) {
 
     uint32_t mutation_threshold = mutation_rate * RAND_MAX;
     uint8_t n_feature;
-    memcpy(output_tree, input_tree, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+    memcpy(output_tree, input_tree, sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
     
-    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
+    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES_BAGGING; tree_i++){
         *seed = *seed + tree_i;
         uint32_t mutation_value = rand_r(seed);
         if (mutation_value < mutation_threshold){
@@ -146,12 +146,12 @@ void tune_nodes(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
     }
 }
 
-void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
-                        tree_data father[N_TREES][N_NODE_AND_LEAFS],
-                        tree_data son[N_TREES][N_NODE_AND_LEAFS]){
+void reproducee_trees(tree_data mother[N_TREES_BAGGING][N_NODE_AND_LEAFS],
+                        tree_data father[N_TREES_BAGGING][N_NODE_AND_LEAFS],
+                        tree_data son[N_TREES_BAGGING][N_NODE_AND_LEAFS]){
 
 
-    for (uint32_t tree_i = 0; tree_i < N_TREES; tree_i++){
+    for (uint32_t tree_i = 0; tree_i < N_TREES_BAGGING; tree_i++){
         if(rand() % 2){
             memcpy(son[tree_i], mother[tree_i], sizeof(tree_data) * N_NODE_AND_LEAFS);
         }else{
@@ -160,7 +160,7 @@ void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
     }
 }
 
-void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]){
+void crossover(tree_data trees_population[POPULATION][N_TREES_BAGGING][N_NODE_AND_LEAFS]){
 
     for (uint32_t p = POPULATION - POPULATION/10; p < POPULATION; p++){
         int index_mother = rand() % (POPULATION/80);
@@ -172,7 +172,7 @@ void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]
 
 }
 
-void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS],
+void mutate_population(tree_data trees_population[POPULATION][N_TREES_BAGGING][N_NODE_AND_LEAFS],
                         float population_accuracy[POPULATION], float max_features[N_FEATURE],
                         float min_features[N_FEATURE], uint8_t n_features, float mutation_factor){
 
@@ -183,17 +183,17 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
         unsigned int seed = omp_get_thread_num() + time(NULL) + p;
         int index_elite = rand_r(&seed) % (POPULATION/4);
 
-        tree_data local_tree[N_TREES][N_NODE_AND_LEAFS];
+        tree_data local_tree[N_TREES_BAGGING][N_NODE_AND_LEAFS];
         memcpy(local_tree, trees_population[index_elite], sizeof(local_tree));
         int threshold = (int)((POPULATION/8)* population_accuracy[index_elite]);
         if (index_elite < threshold){
             tune_nodes(local_tree, trees_population[p], n_features,
                         1 - population_accuracy[p] + mutation_factor*5,
-                        N_TREES, max_features, min_features, &seed);
+                        N_TREES_BAGGING, max_features, min_features, &seed);
         }else{
             mutate_trees(local_tree, trees_population[p], n_features,
                         1 - population_accuracy[p] + mutation_factor,
-                        N_TREES, max_features, min_features, &seed);
+                        N_TREES_BAGGING, max_features, min_features, &seed);
         }
         
     }
@@ -205,16 +205,16 @@ void swapf(float *a, float *b) {
     *b = temp;
 }
 
-void swap_trees(tree_data trees1[N_TREES][N_NODE_AND_LEAFS], 
-                tree_data trees2[N_TREES][N_NODE_AND_LEAFS]) {
-    tree_data temp_trees[N_TREES][N_NODE_AND_LEAFS];
-    memcpy(temp_trees, trees1, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
-    memcpy(trees1, trees2, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
-    memcpy(trees2, temp_trees, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+void swap_trees(tree_data trees1[N_TREES_BAGGING][N_NODE_AND_LEAFS], 
+                tree_data trees2[N_TREES_BAGGING][N_NODE_AND_LEAFS]) {
+    tree_data temp_trees[N_TREES_BAGGING][N_NODE_AND_LEAFS];
+    memcpy(temp_trees, trees1, sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
+    memcpy(trees1, trees2, sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
+    memcpy(trees2, temp_trees, sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
 }
 
 int partition(float population_accuracy[POPULATION], 
-              tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS], 
+              tree_data trees_population[POPULATION][N_TREES_BAGGING][N_NODE_AND_LEAFS], 
               int low, int high) {
     float pivot = population_accuracy[high];
     int i = low - 1;
@@ -231,7 +231,7 @@ int partition(float population_accuracy[POPULATION],
 }
 
 void quicksort(float population_accuracy[POPULATION], 
-               tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS], 
+               tree_data trees_population[POPULATION][N_TREES_BAGGING][N_NODE_AND_LEAFS], 
                int low, int high) {
     if (low < high) {
         int pi = partition(population_accuracy, trees_population, low, high);
@@ -242,7 +242,7 @@ void quicksort(float population_accuracy[POPULATION],
 }
 
 void randomize_percent(float population_accuracy[POPULATION], 
-                          tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS],
+                          tree_data trees_population[POPULATION][N_TREES_BAGGING][N_NODE_AND_LEAFS],
                           float percentage_randomize) {
     int N = POPULATION;
     int M = N * percentage_randomize;  // Número de elementos a aleatorizar
@@ -266,12 +266,12 @@ void randomize_percent(float population_accuracy[POPULATION],
     // Los primeros M índices son nuestra selección aleatoria
     // Extraer los elementos seleccionados
     float selected_accuracy[M];
-    tree_data selected_trees[M][N_TREES][N_NODE_AND_LEAFS];
+    tree_data selected_trees[M][N_TREES_BAGGING][N_NODE_AND_LEAFS];
 
     for (int i = 0; i < M; i++) {
         int idx = indices[i];
         selected_accuracy[i] = population_accuracy[idx];
-        memcpy(selected_trees[i], trees_population[idx], sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+        memcpy(selected_trees[i], trees_population[idx], sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
     }
 
     // Mezclar los elementos seleccionados
@@ -283,22 +283,22 @@ void randomize_percent(float population_accuracy[POPULATION],
         selected_accuracy[j] = temp_accuracy;
 
         // Intercambiar árboles
-        tree_data temp_tree[N_TREES][N_NODE_AND_LEAFS];
-        memcpy(temp_tree, selected_trees[i], sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
-        memcpy(selected_trees[i], selected_trees[j], sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
-        memcpy(selected_trees[j], temp_tree, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+        tree_data temp_tree[N_TREES_BAGGING][N_NODE_AND_LEAFS];
+        memcpy(temp_tree, selected_trees[i], sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
+        memcpy(selected_trees[i], selected_trees[j], sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
+        memcpy(selected_trees[j], temp_tree, sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
     }
 
     // Colocar los elementos mezclados de vuelta en la población
     for (int i = 0; i < M; i++) {
         int idx = indices[i];
         population_accuracy[idx] = selected_accuracy[i];
-        memcpy(trees_population[idx], selected_trees[i], sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
+        memcpy(trees_population[idx], selected_trees[i], sizeof(tree_data) * N_TREES_BAGGING * N_NODE_AND_LEAFS);
     }
 }
 
 void reorganize_population(float population_accuracy[POPULATION], 
-                    tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]) {
+                    tree_data trees_population[POPULATION][N_TREES_BAGGING][N_NODE_AND_LEAFS]) {
     quicksort(population_accuracy, trees_population, 0, POPULATION - 1);
     randomize_percent(population_accuracy, trees_population, 0.25);
 }
@@ -410,13 +410,13 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
     float min_features[N_FEATURE];
     struct feature features_augmented[MAX_TEST_SAMPLES*10];
     int generation_ite = 0;
-    tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS] = {0};
+    tree_data trees_population[POPULATION][N_TREES_BAGGING][N_NODE_AND_LEAFS] = {0};
     float iteration_accuracy[MEMORY_ACU_SIZE] = {0};
     float population_accuracy[POPULATION] = {0};
     float model_accuracy = 0;
     float mutation_factor = 0;
     uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE] = {0};
-    uint32_t n_trees_used = N_TREES / BAGGING_FACTOR;
+    uint32_t n_trees_used = N_TREES_BAGGING;
     uint32_t trees_model = N_TREES;
 
 
@@ -438,7 +438,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
         shuffle(features_augmented, read_samples);
 
         for (uint32_t p = 0; p < POPULATION; p++)
-            generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
+            generate_rando_trees(trees_population[p], n_features, N_TREES_BAGGING, max_features, min_features);
 
         while(1){
             
@@ -501,8 +501,8 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
                                         ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
         }
 
-        for (uint32_t tree_i = 0; tree_i < N_TREES; tree_i++){
-            memcpy(trained_model[bagging_i*N_TREES + tree_i], trees_population[0][tree_i], sizeof(tree_data) * N_NODE_AND_LEAFS);
+        for (uint32_t tree_i = 0; tree_i < N_TREES_BAGGING; tree_i++){
+            memcpy(trained_model[bagging_i*N_TREES_BAGGING + tree_i], trees_population[0][tree_i], sizeof(tree_data) * N_NODE_AND_LEAFS);
         }
     }
 

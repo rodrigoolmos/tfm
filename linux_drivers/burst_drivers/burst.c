@@ -186,7 +186,7 @@ void burst_ping_pong_process(int fd_user, int fd_h2c, int fd_c2h,
 
 }
 
-void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS],
+void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[][N_NODE_AND_LEAFS],
                     int fd_user, struct feature features[MAX_TEST_SAMPLES], uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE],
                     uint32_t read_samples, float* accuracy, uint32_t *n_trees_used){
     clock_t start_time, end_time;
