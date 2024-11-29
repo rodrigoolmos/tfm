@@ -58,6 +58,7 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
 
             trees_loop_ping: for (int t = 0; t < N_TREES_IP && t < *trees_used; t++){
             #pragma HLS UNROLL factor=N_TREES_IP
+			#pragma HLS loop_tripcount min=1 max=N_TREES_IP
 
                 uint8_t node_index = 0;
                 uint8_t node_right;
@@ -66,7 +67,7 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
                 float threshold;
                 tree_data tree_data;
 
-                while(1){
+                predict_loop_ping: while(1){
                 #pragma HLS loop_tripcount min=1 max=8
                     tree_data.compact_data = tree[t][node_index];
                     feature_index = tree_data.tree_camps.feature_index;
@@ -92,6 +93,7 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
 
             trees_loop_pong: for (int t = 0; t < N_TREES_IP && t < *trees_used; t++){
             #pragma HLS UNROLL factor=N_TREES_IP
+			#pragma HLS loop_tripcount min=1 max=N_TREES_IP
                 uint8_t node_index = 0;
                 uint8_t node_right;
                 uint8_t node_left;
@@ -99,7 +101,7 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
                 float threshold;
                 tree_data tree_data;
 
-                while(1){
+                predict_loop_pong: while(1){
                 #pragma HLS loop_tripcount min=1 max=8
                     tree_data.compact_data = tree[t][node_index];
                     feature_index = tree_data.tree_camps.feature_index;
