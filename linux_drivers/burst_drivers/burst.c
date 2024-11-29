@@ -188,10 +188,11 @@ void burst_ping_pong_process(int fd_user, int fd_h2c, int fd_c2h,
 
 void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS],
                     int fd_user, struct feature features[MAX_TEST_SAMPLES], uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE],
-                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples, float* accuracy, uint32_t *n_trees_used){
+                    uint32_t read_samples, float* accuracy, uint32_t *n_trees_used){
     clock_t start_time, end_time;
     double cpu_time_used;
     int i, correct = 0;
+    int32_t inference[MAX_TEST_SAMPLES];
 
     send_trees(fd_user, fd_h2c, tree_data, n_trees_used);
 
@@ -205,7 +206,6 @@ void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_
             correct++;
     }
     *accuracy = 1.0 * correct / read_samples;
-    printf("Execution time per 100 features: %f seconds\n", (100 * cpu_time_used) / read_samples);
 }
 
 void load_features(const char* filename, int max_test_samples, struct feature* features,

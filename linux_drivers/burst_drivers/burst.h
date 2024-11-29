@@ -33,7 +33,7 @@
  */
 void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS],
                     int fd_user, struct feature features[MAX_TEST_SAMPLES], uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE],
-                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples, float* time_execution, uint32_t *n_trees);
+                    uint32_t read_samples, float* time_execution, uint32_t *n_trees);
                     
 /**
  * @brief Loads a CSV file into the features structure and the matrix of raw features.
@@ -68,3 +68,6 @@ void burst_ping_pong_process(int fd_user, int fd_h2c, int fd_c2h,
 
 
 void send_trees(int fd_user, int fd_h2c, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS], uint32_t *n_trees);
+
+void copy_features_to_matrix(struct feature* features, 
+                uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE], uint32_t features_length);

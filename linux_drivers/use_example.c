@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/mman.h>
-#include "./burst_drivers/burst.h"
+#include "./train/train.h"
+
 
 #define N_ITE 200
 
@@ -35,29 +36,31 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    train_model(fd_h2c,fd_c2h, fd_user, "../datasets/kaggle/Heart_Attack.csv", tree_data);
+
     load_features("../datasets/kaggle/Heart_Attack.csv", MAX_TEST_SAMPLES, features, raw_features, &features_length, &read_samples);
     load_model(tree_data, "../trained_models/heart_attack.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features, inference, read_samples, &accuracy, &n_trees_used);
+    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features,read_samples, &accuracy, &n_trees_used);
     printf("Accuracy %f\n", accuracy);
     
     load_features("../datasets/kaggle/diabetes.csv", MAX_TEST_SAMPLES, features, raw_features, &features_length, &read_samples);
     load_model(tree_data, "../trained_models/diabetes.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features, inference, read_samples, &accuracy, &n_trees_used);
+    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features,read_samples, &accuracy, &n_trees_used);
     printf("Accuracy %f\n", accuracy);
     
     load_features("../datasets/kaggle/Lung_Cancer_processed_dataset.csv", MAX_TEST_SAMPLES, features, raw_features, &features_length, &read_samples);
     load_model(tree_data, "../trained_models/lung_cancer.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features, inference, read_samples, &accuracy, &n_trees_used);
+    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features,read_samples, &accuracy, &n_trees_used);
     printf("Accuracy %f\n", accuracy);
     
     load_features("../datasets/kaggle/anemia_processed_dataset.csv", MAX_TEST_SAMPLES, features, raw_features, &features_length, &read_samples);
     load_model(tree_data, "../trained_models/anemia.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features, inference, read_samples, &accuracy, &n_trees_used);
+    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features,read_samples, &accuracy, &n_trees_used);
     printf("Accuracy %f\n", accuracy);
     
     load_features("../datasets/kaggle/alzheimers_processed_dataset.csv", MAX_TEST_SAMPLES, features, raw_features, &features_length, &read_samples);
     load_model(tree_data, "../trained_models/alzheimers.model");
-    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features, inference, read_samples, &accuracy, &n_trees_used);
+    evaluate_model(fd_h2c, fd_c2h,tree_data, fd_user, features, raw_features,read_samples, &accuracy, &n_trees_used);
     printf("Accuracy %f\n", accuracy);
     
     close(fd_h2c);

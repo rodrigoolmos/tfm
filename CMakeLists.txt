@@ -33,7 +33,8 @@ set(LIB_SOURCES_HW
     ${DIR_HW}/common/common.h
     ${DIR_HW}/burst_drivers/burst.c
     ${DIR_HW}/burst_drivers/burst.h
-
+    ${DIR_HW}/train/train.c
+    ${DIR_HW}/train/train.h
 )
 
 add_library(predict_lib STATIC ${LIB_SOURCES_SW})
@@ -49,10 +50,11 @@ if(UNIX AND NOT APPLE)
     set(SOURCES_HW ${DIR_HW}/use_example.c)
     add_executable(execute_model_burst ${SOURCES_HW})
 
-    target_link_libraries(execute_model_burst PRIVATE common_lib)
+    target_link_libraries(execute_model_burst PRIVATE common_lib m OpenMP::OpenMP_C)
 
 endif()
 
 target_link_libraries(execute_model_sw PRIVATE predict_lib m OpenMP::OpenMP_C)
+
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/trained_models)
