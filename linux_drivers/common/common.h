@@ -7,7 +7,7 @@
 #define MAX_TEST_SAMPLES 3000
 
 #define N_NODE_AND_LEAFS 256
-#define N_TREES 64
+#define N_TREES 128
 #define N_FEATURE 32
 
 /**

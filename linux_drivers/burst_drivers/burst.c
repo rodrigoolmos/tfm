@@ -75,29 +75,31 @@ void load_trees_from_ram(int fd_user){
     
     uint32_t data = 0x01;
 
-    if (pwrite(fd_user, &data, 4, LOAD_TREES_ADDR_I) == -1) {
+    if (pwrite(fd_user, &data, 4, LOAD_TREES_ADDR) == -1) {
         perror("pwrite");
         exit(EXIT_FAILURE);
     }
 }
 
-void set_trees_used(int fd_user, uint32_t *n_trees){
+void set_trees_used(int fd_user, uint32_t *n_trees_used){
     
-    if (pwrite(fd_user, n_trees, 4, TREES_USED_ADDR) == -1) {
+    if (pwrite(fd_user, n_trees_used, 4, TREES_USED_ADDR) == -1) {
         perror("pwrite");
         exit(EXIT_FAILURE);
     }
 }
 
-void send_trees(int fd_user, int fd_h2c, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS], uint32_t *n_trees){
+void send_trees(int fd_user, int fd_h2c, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS], uint32_t *n_trees_used){
 
     int i;
     uint64_t offset;
+
+    *n_trees_used = *n_trees_used < N_TREES ? *n_trees_used : N_TREES;
     
-    set_trees_used(fd_user, n_trees);
+    set_trees_used(fd_user, n_trees_used);
     load_trees_from_ram(fd_user);
 
-    for (i = 0; i < *n_trees; i++){
+    for (i = 0; i < *n_trees_used; i++){
         offset =  N_NODE_AND_LEAFS * sizeof(uint64_t) * i;
         write_burst(fd_h2c, TREES_ADDR + offset, tree_data[i], N_NODE_AND_LEAFS * sizeof(uint64_t));
     }
@@ -186,12 +188,12 @@ void burst_ping_pong_process(int fd_user, int fd_h2c, int fd_c2h,
 
 void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS],
                     int fd_user, struct feature features[MAX_TEST_SAMPLES], uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE],
-                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples, float* time_execution, uint32_t *n_trees){
+                    int32_t inference[MAX_TEST_SAMPLES], uint32_t read_samples, float* accuracy, uint32_t *n_trees_used){
     clock_t start_time, end_time;
     double cpu_time_used;
     int i, correct = 0;
 
-    send_trees(fd_user, fd_h2c, tree_data, n_trees);
+    send_trees(fd_user, fd_h2c, tree_data, n_trees_used);
 
     start_time = clock();
     burst_ping_pong_process(fd_user, fd_h2c, fd_c2h, raw_features, read_samples, inference);
@@ -202,12 +204,8 @@ void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[N_TREES][N_NODE_
         if (features[i].prediction == (inference[i] > 0))
             correct++;
     }
-
-    *time_execution = (100 * cpu_time_used) / read_samples;
-
-    printf("Execution time per 100 features: %f seconds\n", *time_execution);
-    printf("Accuracy %f\n", 1.0 * correct / read_samples);
-
+    *accuracy = 1.0 * correct / read_samples;
+    printf("Execution time per 100 features: %f seconds\n", (100 * cpu_time_used) / read_samples);
 }
 
 void load_features(const char* filename, int max_test_samples, struct feature* features,
