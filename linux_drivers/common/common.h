@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #define MAX_LINE_LENGTH 1024
-#define MAX_TEST_SAMPLES 3000
+#define MAX_TEST_SAMPLES 30000
 
 #define N_NODE_AND_LEAFS 256
 #define N_TREES 128

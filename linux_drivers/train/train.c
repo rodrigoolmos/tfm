@@ -429,7 +429,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
     find_max_min_features(features, max_features, min_features);
     read_samples = augment_features(features, read_samples, n_features, 
                                     max_features, min_features, features_augmented,
-                                    MAX_TEST_SAMPLES, 9);
+                                    MAX_TEST_SAMPLES, AUGMENT_FACTOR -1);
 
     ///////////////////////////// TRAIN MODEL //////////////////////////
 
@@ -442,7 +442,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
 
         while(1){
             
-            if (!(generation_ite % 50)){
+            if (!(generation_ite % DSS_GEN_VALUE)){
                 shuffle(features_augmented, read_samples* 80/100);
                 for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
                     iteration_accuracy[accuracy_i] = 0;
@@ -454,7 +454,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
             clock_t t1 = clock();
             for (uint32_t p = 0; p < POPULATION; p++)
                 evaluate_model(fd_h2c, fd_c2h, trees_population[p], fd_user, features, raw_features,
-                               read_samples, &population_accuracy[p], &n_trees_used);
+                               read_samples, &population_accuracy[p], &n_trees_used, 0);
             clock_t t2 = clock();
 
             reorganize_population(population_accuracy, trees_population);
@@ -467,13 +467,13 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
             // evaluation features from out the training dataset
             printf("Bagging !!!!\n");
             evaluate_model(fd_h2c, fd_c2h, trees_population[0], fd_user, features, raw_features,
-                               read_samples, &population_accuracy[0], &n_trees_used);
+                               read_samples, &population_accuracy[0], &n_trees_used, 1);
             printf("Model !!!!\n");
             evaluate_model(fd_h2c, fd_c2h, trained_model, fd_user, features, raw_features,
-                                        read_samples, &model_accuracy, &trees_model);
+                                        read_samples, &model_accuracy, &trees_model, 1);
             /////////////////////////////////////////////////////////////////////
 
-            if(population_accuracy[0] >= 1 || generation_ite > 500){
+            if(population_accuracy[0] >= PRECISION_COND_EXIT || generation_ite > ITERATIONS_COND_EXIT){
                 break;
             }
 
@@ -509,6 +509,6 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
     /////////////////////////////// FINAL TEST OF THE MODEL ////////////////////////////////
     printf("Final evaluation !!!!\n\n");
             evaluate_model(fd_h2c, fd_c2h, trained_model, fd_user, features, raw_features,
-                                        read_samples, &model_accuracy, &trees_model);
+                                        read_samples, &model_accuracy, &trees_model, 1);
 
 }

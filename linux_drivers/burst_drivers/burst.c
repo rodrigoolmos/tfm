@@ -89,21 +89,22 @@ void set_trees_used(int fd_user, uint32_t *n_trees_used){
     }
 }
 
-void send_trees(int fd_user, int fd_h2c, tree_data tree_data[N_TREES][N_NODE_AND_LEAFS], uint32_t *n_trees_used){
+void send_trees(int fd_user, int fd_h2c, tree_data trees_data[N_TREES][N_NODE_AND_LEAFS], uint32_t *n_trees_used){
 
     int i;
     uint64_t offset;
+    tree_data tree_dsdfata[N_TREES* N_NODE_AND_LEAFS] = {0};
 
     *n_trees_used = *n_trees_used < N_TREES ? *n_trees_used : N_TREES;
     
     set_trees_used(fd_user, n_trees_used);
     load_trees_from_ram(fd_user);
-
+    
     for (i = 0; i < *n_trees_used; i++){
         offset =  N_NODE_AND_LEAFS * sizeof(uint64_t) * i;
-        write_burst(fd_h2c, TREES_ADDR + offset, tree_data[i], N_NODE_AND_LEAFS * sizeof(uint64_t));
+        write_burst(fd_h2c, TREES_ADDR + offset, trees_data[i], N_NODE_AND_LEAFS * sizeof(uint64_t));
     }
-
+    
 }
 
 void read_status(int fd_user, uint32_t *data){
@@ -188,24 +189,33 @@ void burst_ping_pong_process(int fd_user, int fd_h2c, int fd_c2h,
 
 void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[][N_NODE_AND_LEAFS],
                     int fd_user, struct feature features[MAX_TEST_SAMPLES], uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE],
-                    uint32_t read_samples, float* accuracy, uint32_t *n_trees_used){
+                    uint32_t read_samples, float* accuracy, uint32_t *n_trees_used, uint32_t sow_log){
     clock_t start_time, end_time;
     double cpu_time_used;
     int i, correct = 0;
     int32_t inference[MAX_TEST_SAMPLES];
 
+    clock_t start = clock();
     send_trees(fd_user, fd_h2c, tree_data, n_trees_used);
+    clock_t end = clock();
+    //printf("Send trees time %f\n", ((float)end-start)/CLOCKS_PER_SEC);
 
     start_time = clock();
     burst_ping_pong_process(fd_user, fd_h2c, fd_c2h, raw_features, read_samples, inference);
     end_time = clock();
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;           
+    //printf("Process features time %f\n", cpu_time_used);
 
     for ( i = 0; i < read_samples; i++){
         if (features[i].prediction == (inference[i] > 0))
             correct++;
     }
     *accuracy = 1.0 * correct / read_samples;
+
+    if (sow_log){
+        printf("Accuracy %f\n", (*accuracy));
+    }
+    
 }
 
 void load_features(const char* filename, int max_test_samples, struct feature* features,
