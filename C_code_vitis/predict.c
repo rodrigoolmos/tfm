@@ -14,29 +14,35 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
     static int8_t local_ping_pong;
     float local_features_ping[N_FEATURE];
     float local_features_pong[N_FEATURE];
-    volatile static uint64_t tree[N_TREES_IP][N_NODE_AND_LEAFS];
+    static uint64_t tree[N_TREES_IP][N_NODE_AND_LEAFS];
 
 	#pragma HLS TOP name=predict
 	#pragma HLS INTERFACE mode=bram port=prediction_ping
 	#pragma HLS INTERFACE mode=bram port=prediction_pong
 	#pragma HLS INTERFACE mode=bram port=bram_features_ping
 	#pragma HLS INTERFACE mode=bram port=bram_features_pong
-	#pragma HLS INTERFACE mode=bram port=bram_tree
+	#pragma HLS INTERFACE mode=bram port=bram_tree bundle=tree_bram
 	#pragma HLS INTERFACE mode=s_axilite port=features_burst_length bundle=control
 	#pragma HLS INTERFACE mode=s_axilite port=ping_pong bundle=control
 	#pragma HLS INTERFACE mode=s_axilite port=load_trees bundle=control
 	#pragma HLS INTERFACE mode=s_axilite port=trees_used bundle=control
 	#pragma HLS INTERFACE s_axilite port=return bundle=control
-	#pragma HLS ARRAY_PARTITION dim=1 factor=N_TREES_IP type=block variable=tree
+	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=tree
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=local_features_ping
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=local_features_pong
 
     if (*load_trees&0x01){
-    	coppy_loop_trees: for (uint32_t t_index = 0; t_index < *trees_used; t_index++){
+    	coppy_loop_trees: for (uint32_t t_index = 0; t_index < N_TREES_IP; t_index++){
 		#pragma HLS loop_tripcount min=1 max=N_TREES_IP
-            for (uint32_t n_index = 0; n_index < N_NODE_AND_LEAFS; n_index++){
-                tree[t_index][n_index] = bram_tree[t_index][n_index];
-            }
+    		if(t_index < *trees_used){
+				for (uint32_t n_index = 0; n_index < N_NODE_AND_LEAFS; n_index++){
+					tree[t_index][n_index] = bram_tree[t_index][n_index];
+				}
+    		}else{
+				for (uint32_t n_index = 0; n_index < N_NODE_AND_LEAFS; n_index++){
+					tree[t_index][n_index] = 0;
+				}
+    		}
         }
     }
 
@@ -57,7 +63,7 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
 
         if (local_ping_pong){
 
-            trees_loop_ping: for (int t = 0; t < N_TREES_IP && t < *trees_used; t++){
+            trees_loop_ping: for (int t = 0; t < N_TREES_IP; t++){
             #pragma HLS UNROLL factor=N_TREES_IP
 			#pragma HLS loop_tripcount min=1 max=N_TREES_IP
 
@@ -93,7 +99,7 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
 
         }else{
 
-            trees_loop_pong: for (int t = 0; t < N_TREES_IP && t < *trees_used; t++){
+            trees_loop_pong: for (int t = 0; t < N_TREES_IP; t++){
             #pragma HLS UNROLL factor=N_TREES_IP
 			#pragma HLS loop_tripcount min=1 max=N_TREES_IP
                 uint8_t node_index = 0;
