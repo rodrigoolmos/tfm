@@ -33,7 +33,6 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
 
     if (*load_trees&0x01){
     	coppy_loop_trees: for (uint32_t t_index = 0; t_index < N_TREES_IP; t_index++){
-		#pragma HLS loop_tripcount min=1 max=N_TREES_IP
 			for (uint32_t n_index = 0; n_index < N_NODE_AND_LEAFS; n_index++){
 				tree[t_index][n_index] = (t_index < *trees_used) ? bram_tree[t_index][n_index] : 0;
     		}
