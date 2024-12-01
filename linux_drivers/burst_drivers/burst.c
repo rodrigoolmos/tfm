@@ -215,6 +215,8 @@ void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[][N_NODE_AND_LEA
     end_time = clock();
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;           
     //printf("Process features time %f\n", cpu_time_used);
+    //printf("Inference time  %f\n", 1000000000*cpu_time_used/read_samples);
+
 
     for ( i = 0; i < read_samples; i++){
         if (features[i].prediction == (inference[i] > 0))
