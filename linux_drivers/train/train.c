@@ -447,14 +447,14 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
                 for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
                     iteration_accuracy[accuracy_i] = 0;
                 }
+                copy_features_to_matrix(features_augmented, raw_features, read_samples);
             }
 
-            copy_features_to_matrix(features, raw_features, read_samples);
 
             clock_t t1 = clock();
             for (uint32_t p = 0; p < POPULATION; p++)
-                evaluate_model(fd_h2c, fd_c2h, trees_population[p], fd_user, features, raw_features,
-                               read_samples, &population_accuracy[p], &n_trees_used, 0);
+                evaluate_model(fd_h2c, fd_c2h, trees_population[p], fd_user, features_augmented, raw_features,
+                               read_samples*50/100, &population_accuracy[p], &n_trees_used, 0);
             clock_t t2 = clock();
 
             reorganize_population(population_accuracy, trees_population);
@@ -466,11 +466,13 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
 
             // evaluation features from out the training dataset
             printf("Bagging !!!!\n");
-            evaluate_model(fd_h2c, fd_c2h, trees_population[0], fd_user, features, raw_features,
-                               read_samples, &population_accuracy[0], &n_trees_used, 1);
+            evaluate_model(fd_h2c, fd_c2h, trees_population[0], fd_user, &features_augmented[read_samples * 80/100],
+                                &raw_features[read_samples * 80/100], read_samples*20/100,
+                                &population_accuracy[0], &n_trees_used, 1);
             printf("Model !!!!\n");
-            evaluate_model(fd_h2c, fd_c2h, trained_model, fd_user, features, raw_features,
-                                        read_samples, &model_accuracy, &trees_model, 1);
+            evaluate_model(fd_h2c, fd_c2h, trained_model, fd_user, &features_augmented[read_samples * 80/100],
+                                &raw_features[read_samples * 80/100], read_samples*20/100,
+                                &population_accuracy[0], &n_trees_used, 1);
             /////////////////////////////////////////////////////////////////////
 
             if(population_accuracy[0] >= PRECISION_COND_EXIT || generation_ite > ITERATIONS_COND_EXIT){
@@ -497,8 +499,10 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
             printf("Mutation_factor %f\n", mutation_factor);
             printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
             printf("Execution time inference %f, reorganize_population %f,"
-                                        "mutate_population %f, crossover %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
-                                        ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
+                                        "mutate_population %f, crossover %f "
+                                        "total time %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
+                                        ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, 
+                                        ((float)t5-t4)/CLOCKS_PER_SEC, ((float)t5-t1)/CLOCKS_PER_SEC);
         }
 
         for (uint32_t tree_i = 0; tree_i < N_TREES_BAGGING; tree_i++){
@@ -508,7 +512,8 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
 
     /////////////////////////////// FINAL TEST OF THE MODEL ////////////////////////////////
     printf("Final evaluation !!!!\n\n");
-            evaluate_model(fd_h2c, fd_c2h, trained_model, fd_user, features, raw_features,
-                                        read_samples, &model_accuracy, &trees_model, 1);
+            evaluate_model(fd_h2c, fd_c2h, trained_model, fd_user,  &features_augmented[read_samples * 80/100],
+                                &raw_features[read_samples * 80/100], read_samples*20/100,
+                                &population_accuracy[0], &n_trees_used, 1);
 
 }
