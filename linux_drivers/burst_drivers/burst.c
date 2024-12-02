@@ -110,10 +110,7 @@ void send_trees(int fd_user, int fd_h2c, tree_data trees_data[N_TREES][N_NODE_AN
     set_trees_used(fd_user, n_trees_used);
     load_trees_from_ram(fd_user);
     
-    for (i = 0; i < *n_trees_used; i++){
-        offset =  N_NODE_AND_LEAFS * sizeof(uint64_t) * i;
-        write_burst(fd_h2c, TREES_ADDR + offset, trees_data[i], N_NODE_AND_LEAFS * sizeof(uint64_t));
-    }
+    write_burst(fd_h2c, TREES_ADDR, trees_data, (*n_trees_used) * N_NODE_AND_LEAFS * sizeof(uint64_t));
     
 }
 
