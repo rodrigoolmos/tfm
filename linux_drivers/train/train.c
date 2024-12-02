@@ -1,4 +1,5 @@
 #include "train.h"
+#include <sys/time.h>
 
 uint8_t right_index[255] =  {128, 65, 34, 19, 12, 9, 8, 0, 0, 11, 0, 0, 16, 15, 0, 0, 18, 0, 0, 27, 24, 23, 0, 0, 26, 0, 0, 31, 30, 0, 0, 33, 0, 0, 50, 43, 40, 39, 0, 0, 42, 0, 0, 47, 46, 0, 0, 49, 0, 0, 58, 55, 54, 0, 0, 57, 0, 0, 62, 61, 0, 0, 64, 0, 0, 97, 82, 75, 72, 71, 0, 0, 74, 0, 0, 79, 78, 0, 0, 81, 0, 0, 90, 87, 86, 0, 0, 89, 0, 0, 94, 93, 0, 0, 96, 0, 0, 113, 106, 103, 102, 0, 0, 105, 0, 0, 110, 109, 0, 0, 112, 0, 0, 121, 118, 117, 0, 0, 120, 0, 0, 125, 124, 0, 0, 127, 0, 0, 192, 161, 146, 139, 136, 135, 0, 0, 138, 0, 0, 143, 142, 0, 0, 145, 0, 0, 154, 151, 150, 0, 0, 153, 0, 0, 158, 157, 0, 0, 160, 0, 0, 177, 170, 167, 166, 0, 0, 169, 0, 0, 174, 173, 0, 0, 176, 0, 0, 185, 182, 181, 0, 0, 184, 0, 0, 189, 188, 0, 0, 191, 0, 0, 224, 209, 202, 199, 198, 0, 0, 201, 0, 0, 206, 205, 0, 0, 208, 0, 0, 217, 214, 213, 0, 0, 216, 0, 0, 221, 220, 0, 0, 223, 0, 0, 240, 233, 230, 229, 0, 0, 232, 0, 0, 237, 236, 0, 0, 239, 0, 0, 248, 245, 244, 0, 0, 247, 0, 0, 252, 251, 0, 0, 254, 0, 0};
 
@@ -419,7 +420,11 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
     uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE] = {0};
     uint32_t n_trees_used = N_TREES_BAGGING;
     uint32_t trees_model = N_TREES;
-
+    struct timeval init_predictions = {0};
+    struct timeval end_predictions = {0};
+    struct timeval init_train = {0};
+    struct timeval end_train = {0};
+    double tiempo_ejecucion;
 
     ////////////////////////// PREPORCESS FEATURES /////////////////////
     printf("Training model %s\n", csv_path);
@@ -442,7 +447,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
             generate_rando_trees(trees_population[p], n_features, N_TREES_BAGGING, max_features, min_features);
 
         while(1){
-            
+            gettimeofday(&init_train, NULL);
             if (!(generation_ite % DSS_GEN_VALUE)){
                 shuffle(features_augmented, read_samples* 80/100);
                 for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
@@ -451,15 +456,13 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
                 copy_features_to_matrix(features_augmented, raw_features, read_samples);
             }
 
-
-            clock_t t1 = clock();
+            gettimeofday(&init_predictions, NULL);
             for (uint32_t p = 0; p < POPULATION; p++)
                 evaluate_model(fd_h2c, fd_c2h, trees_population[p], fd_user, features_augmented, raw_features,
                                read_samples*50/100, &population_accuracy[p], &n_trees_used, 0);
-            clock_t t2 = clock();
-
+            gettimeofday(&end_predictions, NULL);
+            
             reorganize_population(population_accuracy, trees_population);
-            clock_t t3 = clock();
 
             /////////////////////////////// tests ///////////////////////////////
 
@@ -482,9 +485,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
 
             mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, mutation_factor);
 
-            clock_t t4 = clock();
             crossover(trees_population);
-            clock_t t5 = clock();
 
             generation_ite ++;
             mutation_factor = 0;
@@ -497,13 +498,14 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
                 }
             }
 
+            gettimeofday(&end_train, NULL);
             printf("Mutation_factor %f\n", mutation_factor);
             printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
-            printf("Execution time inference %f, reorganize_population %f,"
-                                        "mutate_population %f, crossover %f "
-                                        "total time %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
-                                        ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, 
-                                        ((float)t5-t4)/CLOCKS_PER_SEC, ((float)t5-t1)/CLOCKS_PER_SEC);
+            printf("Execution trainig %fs\n", (end_train.tv_sec - init_train.tv_sec) + 
+                                        (end_train.tv_usec - init_train.tv_usec) / 1000000.0);
+            printf("Execution predictions %fs\n", (end_predictions.tv_sec - init_predictions.tv_sec) + 
+                                        (end_predictions.tv_usec - init_predictions.tv_usec) / 1000000.0);
+
         }
 
         for (uint32_t tree_i = 0; tree_i < N_TREES_BAGGING; tree_i++){

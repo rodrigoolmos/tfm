@@ -6,7 +6,7 @@
 #include <sys/mman.h>
 #include <string.h>
 #include <errno.h>
-#include <time.h>
+#include <sys/time.h>
 #include "burst.h"
 
 void wait_done(int fd_user){
@@ -200,22 +200,29 @@ void burst_ping_pong_process(int fd_user, int fd_h2c, int fd_c2h,
 void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[][N_NODE_AND_LEAFS],
                     int fd_user, struct feature features[MAX_TEST_SAMPLES], uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE],
                     uint32_t read_samples, float* accuracy, uint32_t *n_trees_used, uint32_t sow_log){
-    clock_t start_time, end_time;
-    double cpu_time_used;
+
     int i, correct = 0;
     int32_t inference[MAX_TEST_SAMPLES];
+    struct timeval init_send_trees = {0};
+    struct timeval end_send_trees = {0};
+    struct timeval init_process = {0};
+    struct timeval end_process = {0};
+    double execution_time = 0;
 
-    clock_t start = clock();
+
+    gettimeofday(&init_send_trees, NULL);
     send_trees(fd_user, fd_h2c, tree_data, n_trees_used);
-    clock_t end = clock();
-    //printf("Send trees time %f\n", ((float)end-start)/CLOCKS_PER_SEC);
+    gettimeofday(&end_send_trees, NULL);
+    printf("Send trees time %f us\n", (end_send_trees.tv_sec - init_send_trees.tv_sec) +
+                                     (end_send_trees.tv_usec - init_send_trees.tv_usec) / 1.0);
 
-    start_time = clock();
-    burst_ping_pong_process(fd_user, fd_h2c, fd_c2h, raw_features, read_samples, inference);
-    end_time = clock();
-    cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;           
-    //printf("Process features time %f\n", cpu_time_used);
-    //printf("Inference time  %f\n", 1000000000*cpu_time_used/read_samples);
+    gettimeofday(&init_process, NULL);
+    burst_ping_pong_process(fd_user, fd_h2c, fd_c2h, raw_features, read_samples, inference);          
+    gettimeofday(&end_process, NULL);
+    execution_time = (end_process.tv_sec - init_process.tv_sec) + 
+                    (end_process.tv_usec - init_process.tv_usec) * 1.0;
+    printf("Process features time %f us\n", execution_time);
+    printf("Inference time  %f ns\n\n\n", 1000*execution_time/read_samples);
 
 
     for ( i = 0; i < read_samples; i++){
