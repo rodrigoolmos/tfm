@@ -413,6 +413,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
     tree_data trees_population[POPULATION][N_TREES_BAGGING][N_NODE_AND_LEAFS] = {0};
     float iteration_accuracy[MEMORY_ACU_SIZE] = {0};
     float population_accuracy[POPULATION] = {0};
+    float population_accuracy_test = 0;
     float model_accuracy = 0;
     float mutation_factor = 0;
     uint32_t raw_features[MAX_TEST_SAMPLES][N_FEATURE] = {0};
@@ -468,11 +469,11 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
             printf("Bagging !!!!\n");
             evaluate_model(fd_h2c, fd_c2h, trees_population[0], fd_user, &features_augmented[read_samples * 80/100],
                                 &raw_features[read_samples * 80/100], read_samples*20/100,
-                                &population_accuracy[0], &n_trees_used, 1);
+                                &population_accuracy_test, &n_trees_used, 1);
             printf("Model !!!!\n");
             evaluate_model(fd_h2c, fd_c2h, trained_model, fd_user, &features_augmented[read_samples * 80/100],
                                 &raw_features[read_samples * 80/100], read_samples*20/100,
-                                &population_accuracy[0], &n_trees_used, 1);
+                                &population_accuracy_test, &n_trees_used, 1);
             /////////////////////////////////////////////////////////////////////
 
             if(population_accuracy[0] >= PRECISION_COND_EXIT || generation_ite > ITERATIONS_COND_EXIT){
@@ -514,6 +515,6 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
     printf("Final evaluation !!!!\n\n");
             evaluate_model(fd_h2c, fd_c2h, trained_model, fd_user,  &features_augmented[read_samples * 80/100],
                                 &raw_features[read_samples * 80/100], read_samples*20/100,
-                                &population_accuracy[0], &n_trees_used, 1);
+                                &population_accuracy_test, &n_trees_used, 1);
 
 }
