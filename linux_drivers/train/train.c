@@ -461,7 +461,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
                 evaluate_model(fd_h2c, fd_c2h, trees_population[p], fd_user, features_augmented, raw_features,
                                read_samples*50/100, &population_accuracy[p], &n_trees_used, 0);
             gettimeofday(&end_predictions, NULL);
-            
+
             reorganize_population(population_accuracy, trees_population);
 
             /////////////////////////////// tests ///////////////////////////////
@@ -503,7 +503,7 @@ void train_model(int fd_h2c, int fd_c2h, int fd_user, char *csv_path,
             printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
             printf("Execution trainig %fs\n", (end_train.tv_sec - init_train.tv_sec) + 
                                         (end_train.tv_usec - init_train.tv_usec) / 1000000.0);
-            printf("Execution predictions %fs\n", (end_predictions.tv_sec - init_predictions.tv_sec) + 
+            printf("Execution all %fs\n", (end_predictions.tv_sec - init_predictions.tv_sec) + 
                                         (end_predictions.tv_usec - init_predictions.tv_usec) / 1000000.0);
 
         }

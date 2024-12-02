@@ -210,19 +210,19 @@ void evaluate_model(int fd_h2c, int fd_c2h, tree_data tree_data[][N_NODE_AND_LEA
     double execution_time = 0;
 
 
-    gettimeofday(&init_send_trees, NULL);
+    //gettimeofday(&init_send_trees, NULL);
     send_trees(fd_user, fd_h2c, tree_data, n_trees_used);
-    gettimeofday(&end_send_trees, NULL);
-    printf("Send trees time %f us\n", (end_send_trees.tv_sec - init_send_trees.tv_sec) +
-                                     (end_send_trees.tv_usec - init_send_trees.tv_usec) / 1.0);
+    //gettimeofday(&end_send_trees, NULL);
+    //printf("Send trees time %f us\n", (end_send_trees.tv_sec - init_send_trees.tv_sec) +
+    //                                 (end_send_trees.tv_usec - init_send_trees.tv_usec) / 1.0);
 
-    gettimeofday(&init_process, NULL);
+    //gettimeofday(&init_process, NULL);
     burst_ping_pong_process(fd_user, fd_h2c, fd_c2h, raw_features, read_samples, inference);          
-    gettimeofday(&end_process, NULL);
-    execution_time = (end_process.tv_sec - init_process.tv_sec) + 
-                    (end_process.tv_usec - init_process.tv_usec) * 1.0;
-    printf("Process features time %f us\n", execution_time);
-    printf("Inference time  %f ns\n\n\n", 1000*execution_time/read_samples);
+    //gettimeofday(&end_process, NULL);
+    //execution_time = (end_process.tv_sec - init_process.tv_sec) + 
+    //                (end_process.tv_usec - init_process.tv_usec) * 1.0;
+    //printf("Process features time %f us\n", execution_time);
+    //printf("Inference time  %f ns\n\n\n", 1000*execution_time/read_samples);
 
 
     for ( i = 0; i < read_samples; i++){
