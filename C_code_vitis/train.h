@@ -1,6 +1,6 @@
 #include "predict.h"
 #include <math.h>
-#include <time.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
