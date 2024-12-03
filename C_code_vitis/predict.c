@@ -32,9 +32,9 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
 	#pragma HLS ARRAY_PARTITION dim=1 type=complete variable=local_features_pong
 
     if (*load_trees&0x01){
-    	coppy_loop_trees: for (uint32_t t_index = 0; t_index < N_TREES_IP; t_index++){
+    	coppy_loop_trees: for (uint32_t t_index = 0; t_index < (*trees_used); t_index++){
 			for (uint32_t n_index = 0; n_index < N_NODE_AND_LEAFS; n_index++){
-				tree[t_index][n_index] = (t_index < *trees_used) ? bram_tree[t_index][n_index] : 0;
+				tree[t_index][n_index] = bram_tree[t_index][n_index];
     		}
         }
     }
@@ -82,7 +82,7 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
                         break;
                 }
 
-                leaf_value = tree_data.tree_camps.float_int_union.i;;
+                leaf_value = t < (*trees_used) ? tree_data.tree_camps.float_int_union.i : 0;
                 sum += leaf_value;
             }
 
@@ -117,7 +117,7 @@ void predict(uint64_t bram_tree[N_TREES_IP][N_NODE_AND_LEAFS],
                         break;
                 }
 
-                leaf_value = tree_data.tree_camps.float_int_union.i;;
+                leaf_value = t < (*trees_used) ? tree_data.tree_camps.float_int_union.i : 0;
                 sum += leaf_value;
             }
 
