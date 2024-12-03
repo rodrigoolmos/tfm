@@ -9,13 +9,13 @@
 #include <omp.h>
 #include "../burst_drivers/burst.h"
 
-#define POPULATION 1024*4
-#define MEMORY_ACU_SIZE 10
-#define BAGGING_FACTOR 16
-#define AUGMENT_FACTOR 10
-#define DSS_GEN_VALUE 10
-#define PRECISION_COND_EXIT 1
-#define ITERATIONS_COND_EXIT 100
+#define POPULATION 1024             // population train with
+#define MEMORY_ACU_SIZE 10          // size to be remembered between generations for Mutation_factor
+#define BAGGING_FACTOR 64            
+#define AUGMENT_FACTOR 1            // xtimes de actual size of features
+#define DSS_GEN_VALUE 10            // each gen times the ds gets suffled
+#define PRECISION_COND_EXIT 1       // accurazy to exit
+#define ITERATIONS_COND_EXIT 100    // num generation to exit
 #define N_TREES_BAGGING N_TREES / BAGGING_FACTOR
 
 void generate_rando_trees(tree_data trees[N_TREES_BAGGING][N_NODE_AND_LEAFS], 
