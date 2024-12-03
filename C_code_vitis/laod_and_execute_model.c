@@ -192,6 +192,12 @@ void show_logs(float population_accuracy[POPULATION]){
 }
 
 int main() {
+
+    struct timeval init_predictions = {0};
+    struct timeval end_predictions = {0};
+    struct timeval init_train = {0};
+    struct timeval end_train = {0};
+
     float population_accuracy[POPULATION] = {0};
     float iteration_accuracy[MEMORY_ACU_SIZE] = {0};
     float mutation_factor = 0;
@@ -207,7 +213,7 @@ int main() {
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS] = {0};
     tree_data golden_tree[N_TREES_IP][N_NODE_AND_LEAFS] = {0};
 
-    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/alzheimers_processed_dataset.csv";
+    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/Heart_Attack.csv";
 
     printf("Training model %s\n", path);
     int n_features;
@@ -218,7 +224,7 @@ int main() {
     find_max_min_features(features, max_features, min_features);
     read_samples = augment_features(features, read_samples, n_features, 
                                     max_features, min_features, features_augmented,
-                                    MAX_TEST_SAMPLES*10, 0);
+                                    MAX_TEST_SAMPLES*10, 7);
     for (size_t bagging_i = 0; bagging_i < N_BAGGING; bagging_i++){
         generation_ite = 0;
         shuffle(features_augmented, read_samples);
@@ -227,21 +233,18 @@ int main() {
             generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
 
         while(1){
-            
+            gettimeofday(&init_train, NULL);
             if (!(generation_ite % 50)){
                 shuffle(features_augmented, read_samples* 80/100);
                 for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
                     iteration_accuracy[accuracy_i] = 0;
                 }
             }
-
-            clock_t t1 = clock();
+            gettimeofday(&init_predictions, NULL);
             for (uint32_t p = 0; p < POPULATION; p++)
                 execute_model(trees_population[p], features_augmented, read_samples * 50/100, &population_accuracy[p], 0);
-            clock_t t2 = clock();
-
+            gettimeofday(&end_predictions, NULL);
             reorganize_population(population_accuracy, trees_population);
-            clock_t t3 = clock();
 
             /////////////////////////////// tests ///////////////////////////////
 
@@ -260,9 +263,7 @@ int main() {
 
             mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, mutation_factor);
 
-            clock_t t4 = clock();
             crossover(trees_population);
-            clock_t t5 = clock();
 
             generation_ite ++;
             mutation_factor = 0;
@@ -274,12 +275,13 @@ int main() {
                     }
                 }
             }
-
+            gettimeofday(&end_train, NULL);
             printf("Mutation_factor %f\n", mutation_factor);
             printf("Generation ite %i index ite %i\n", generation_ite, generation_ite % 10);
-            printf("Execution time inference %f, reorganize_population %f,"
-                                        "mutate_population %f, crossover %f \n\n\n", ((float)t2-t1)/CLOCKS_PER_SEC, 
-                                        ((float)t3-t2)/CLOCKS_PER_SEC, ((float)t4-t3)/CLOCKS_PER_SEC, ((float)t5-t4)/CLOCKS_PER_SEC);
+            printf("Execution trainig %fs\n", (end_predictions.tv_sec - init_predictions.tv_sec) + 
+                                        (end_predictions.tv_usec - init_predictions.tv_usec) / 1000000.0);
+            printf("Execution all %fs\n", (end_train.tv_sec - init_train.tv_sec) + 
+                                        (end_train.tv_usec - init_train.tv_usec) / 1000000.0);
         }
 
         for (uint32_t tree_i = 0; tree_i < N_TREES; tree_i++){
