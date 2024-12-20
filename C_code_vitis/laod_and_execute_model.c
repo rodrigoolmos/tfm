@@ -69,14 +69,13 @@ int read_n_features(const char *csv_file, int n, struct feature *features, int *
 
 void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS], 
                     struct feature *features, int read_samples, 
-                    float *accuracy, uint8_t sow_log){
+                    float *accuracy, uint8_t sow_log, int32_t *trees_used){
 
     int correct = 0;
     int32_t prediction;
     uint32_t trees_score = 0;
     int32_t burst_size = 1;
     int32_t new_model = 1;
-    int32_t trees_used = N_TREES;
 
 
     float features_burst[N_FEATURE];
@@ -85,7 +84,7 @@ void execute_model(tree_data tree[N_TREES][N_NODE_AND_LEAFS],
 
     for (int i = 0; i < read_samples; i++){
         memcpy(features_burst, features[i].features, sizeof(float) * N_FEATURE);  
-        predict(tree, NULL, features_burst, NULL, &prediction, &burst_size, &new_model, &trees_used, 0);
+        predict(tree, NULL, features_burst, NULL, &prediction, &burst_size, &new_model, trees_used, 0);
         if (features[i].prediction == (prediction > 0)){
             trees_score += abs(prediction);
             correct++;
@@ -207,13 +206,14 @@ int main() {
     struct feature features[MAX_TEST_SAMPLES];
     struct feature features_augmented[MAX_TEST_SAMPLES*10];
     int read_samples;
+    uint32_t used_trees = 0;
     int generation_ite = 0;
     srand(clock());
 
     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS] = {0};
     tree_data golden_tree[N_TREES_IP][N_NODE_AND_LEAFS] = {0};
 
-    char *path ="/home/rodrigo/Documents/tfm/datasets/kaggle/Heart_Attack.csv";
+    char *path ="/home/rodrigo/Documents/AI_neuroral_network/datasets/kaggle/features.csv";
 
     printf("Training model %s\n", path);
     int n_features;
@@ -224,25 +224,26 @@ int main() {
     find_max_min_features(features, max_features, min_features);
     read_samples = augment_features(features, read_samples, n_features, 
                                     max_features, min_features, features_augmented,
-                                    MAX_TEST_SAMPLES*10, 7);
-    for (size_t bagging_i = 0; bagging_i < N_BAGGING; bagging_i++){
+                                    MAX_TEST_SAMPLES*10, 0);
+    for (size_t boosting_i = 0; boosting_i < N_TREES / N_BOOSTING; boosting_i++){
+        used_trees = (boosting_i + 1)*N_BOOSTING;
         generation_ite = 0;
         shuffle(features_augmented, read_samples);
 
         for (uint32_t p = 0; p < POPULATION; p++)
-            generate_rando_trees(trees_population[p], n_features, N_TREES, max_features, min_features);
+            generate_rando_trees(trees_population[p], n_features, boosting_i, max_features, min_features);
 
         while(1){
             gettimeofday(&init_train, NULL);
-            if (!(generation_ite % 50)){
-                shuffle(features_augmented, read_samples* 80/100);
-                for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
-                    iteration_accuracy[accuracy_i] = 0;
-                }
-            }
+            // if (!(generation_ite % 50)){
+            //     shuffle(features_augmented, read_samples* 80/100);
+            //     for (int accuracy_i = 0; accuracy_i < MEMORY_ACU_SIZE; accuracy_i++){
+            //         iteration_accuracy[accuracy_i] = 0;
+            //     }
+            // }
             gettimeofday(&init_predictions, NULL);
             for (uint32_t p = 0; p < POPULATION; p++)
-                execute_model(trees_population[p], features_augmented, read_samples * 50/100, &population_accuracy[p], 0);
+                execute_model(trees_population[p], features_augmented, read_samples * 80/100, &population_accuracy[p], 0, &used_trees);
             gettimeofday(&end_predictions, NULL);
             reorganize_population(population_accuracy, trees_population);
 
@@ -251,19 +252,17 @@ int main() {
             show_logs(population_accuracy);
 
             // evaluation features from out the training dataset
-            printf("Bagging !!!!\n");
-            evaluate_model(trees_population[0], &features_augmented[read_samples * 80/100], read_samples * 20/100);
-            printf("Model !!!!\n");
+            printf("Boosting iteration %i of %i\n", boosting_i, N_TREES / N_BOOSTING);
             evaluate_model(golden_tree, &features_augmented[read_samples * 80/100], read_samples * 20/100);
             /////////////////////////////////////////////////////////////////////
 
-            if(population_accuracy[0] >= 1 || generation_ite > 500){
+            if(population_accuracy[0] >= 1 || generation_ite > 100){
                 break;
             }
 
-            mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, mutation_factor);
+            mutate_population(trees_population, population_accuracy, max_features, min_features, n_features, mutation_factor, boosting_i);
 
-            crossover(trees_population);
+            crossover(trees_population, boosting_i);
 
             generation_ite ++;
             mutation_factor = 0;
@@ -285,7 +284,7 @@ int main() {
         }
 
         for (uint32_t tree_i = 0; tree_i < N_TREES; tree_i++){
-            memcpy(golden_tree[bagging_i*N_TREES + tree_i], trees_population[0][tree_i], sizeof(tree_data) * N_NODE_AND_LEAFS);
+            memcpy(golden_tree[tree_i], trees_population[0][tree_i], sizeof(tree_data) * N_NODE_AND_LEAFS);
         }
     }
     

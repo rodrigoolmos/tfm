@@ -9,7 +9,7 @@
 #include <limits.h>
 #include <omp.h>
 
-#define POPULATION 1024*4
+#define POPULATION 1024
 #define MEMORY_ACU_SIZE 10
 
 
@@ -18,9 +18,10 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
 
 void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS],
                         float population_accuracy[POPULATION], float max_features[N_FEATURE],
-                        float min_features[N_FEATURE], uint8_t n_features, float noise_factor);
+                        float min_features[N_FEATURE], uint8_t n_features, float noise_factor,
+                        uint32_t boosting_i);
 
-void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]);
+void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS], uint32_t boosting_i);
 
 void reorganize_population(float population_accuracy[POPULATION], 
                     tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]);

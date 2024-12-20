@@ -49,14 +49,15 @@ uint8_t generate_feture_index(uint8_t feature_length, int *seed) {
 }
 
 void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS], 
-                    uint8_t n_features, uint16_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE]) {
+                    uint8_t n_features, uint16_t boosting_i, float max_features[N_FEATURE], float min_features[N_FEATURE]) {
 
     srand(clock());
     uint8_t n_feature;
     int seed = trees;
 
     #pragma omp parallel for schedule(static)
-    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
+    for (uint32_t tree_i = boosting_i * N_BOOSTING; 
+                tree_i < (boosting_i + 1) * N_BOOSTING && tree_i < N_TREES; tree_i++){
         for (uint32_t node_i = 0; node_i < N_NODE_AND_LEAFS - 1; node_i++){
             seed = seed + omp_get_thread_num() + time(NULL) + tree_i + node_i;
             trees[tree_i][node_i].tree_camps.feature_index = generate_feture_index(n_features, &seed);
@@ -85,13 +86,15 @@ void generate_rando_trees(tree_data trees[N_TREES][N_NODE_AND_LEAFS],
 void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS], 
                  tree_data output_tree[N_TREES][N_NODE_AND_LEAFS],
                  uint8_t n_features, float mutation_rate, 
-                 uint32_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE], int *seed) {
+                 uint32_t boosting_i, float max_features[N_FEATURE], float min_features[N_FEATURE], int *seed) {
 
     uint32_t mutation_threshold = mutation_rate * RAND_MAX;
     uint8_t n_feature;
     memcpy(output_tree, input_tree, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
     
-    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
+    for (uint32_t tree_i = boosting_i * N_BOOSTING; 
+                tree_i < (boosting_i + 1) * N_BOOSTING && tree_i < N_TREES; tree_i++){
+
         *seed = *seed + tree_i;
         uint32_t mutation_value = rand_r(seed);
         if (mutation_value < mutation_threshold){
@@ -122,13 +125,15 @@ void mutate_trees(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
 void tune_nodes(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS], 
                  tree_data output_tree[N_TREES][N_NODE_AND_LEAFS],
                  uint8_t n_features, float mutation_rate, 
-                 uint32_t n_trees, float max_features[N_FEATURE], float min_features[N_FEATURE], int *seed) {
+                 uint32_t boosting_i, float max_features[N_FEATURE], float min_features[N_FEATURE], int *seed) {
 
     uint32_t mutation_threshold = mutation_rate * RAND_MAX;
     uint8_t n_feature;
     memcpy(output_tree, input_tree, sizeof(tree_data) * N_TREES * N_NODE_AND_LEAFS);
     
-    for (uint32_t tree_i = 0; tree_i < n_trees && tree_i < N_TREES; tree_i++){
+    for (uint32_t tree_i = boosting_i * N_BOOSTING; 
+                tree_i < (boosting_i + 1) * N_BOOSTING && tree_i < N_TREES; tree_i++){
+
         *seed = *seed + tree_i;
         uint32_t mutation_value = rand_r(seed);
         if (mutation_value < mutation_threshold){
@@ -148,10 +153,12 @@ void tune_nodes(tree_data input_tree[N_TREES][N_NODE_AND_LEAFS],
 
 void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
                         tree_data father[N_TREES][N_NODE_AND_LEAFS],
-                        tree_data son[N_TREES][N_NODE_AND_LEAFS]){
+                        tree_data son[N_TREES][N_NODE_AND_LEAFS], uint32_t boosting_i){
 
 
-    for (uint32_t tree_i = 0; tree_i < N_TREES; tree_i++){
+    for (uint32_t tree_i = boosting_i * N_BOOSTING; 
+                tree_i < (boosting_i + 1) * N_BOOSTING && tree_i < N_TREES; tree_i++){
+
         if(rand() % 2){
             memcpy(son[tree_i], mother[tree_i], sizeof(tree_data) * N_NODE_AND_LEAFS);
         }else{
@@ -160,21 +167,22 @@ void reproducee_trees(tree_data mother[N_TREES][N_NODE_AND_LEAFS],
     }
 }
 
-void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS]){
+void crossover(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS], uint32_t boosting_i){
 
     for (uint32_t p = POPULATION - POPULATION/10; p < POPULATION; p++){
         int index_mother = rand() % (POPULATION/80);
         int index_father = rand() % (POPULATION/80) + POPULATION/80;
 
         reproducee_trees(trees_population[index_mother], trees_population[index_father],
-                                trees_population[p]);
+                                trees_population[p], boosting_i);
     }
 
 }
 
 void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AND_LEAFS],
                         float population_accuracy[POPULATION], float max_features[N_FEATURE],
-                        float min_features[N_FEATURE], uint8_t n_features, float mutation_factor){
+                        float min_features[N_FEATURE], uint8_t n_features, float mutation_factor, 
+                        uint32_t boosting_i){
 
     printf("Número de hilos: %d\n", omp_get_max_threads());
 
@@ -189,11 +197,11 @@ void mutate_population(tree_data trees_population[POPULATION][N_TREES][N_NODE_AN
         if (index_elite < threshold){
             tune_nodes(local_tree, trees_population[p], n_features,
                         1 - population_accuracy[p] + mutation_factor*5,
-                        N_TREES, max_features, min_features, &seed);
+                        boosting_i, max_features, min_features, &seed);
         }else{
             mutate_trees(local_tree, trees_population[p], n_features,
                         1 - population_accuracy[p] + mutation_factor,
-                        N_TREES, max_features, min_features, &seed);
+                        boosting_i, max_features, min_features, &seed);
         }
         
     }
